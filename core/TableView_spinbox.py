@@ -18,6 +18,16 @@ class SpinBoxDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QSpinBox(parent)
         editor.setFrame(False)
+        editor.setFrame(False)
+        editor.setMinimum(0)
+        editor.setMaximum(100)
+
+        return editor
+
+    def setEditorData(self, spinBox, index):
+        value = index.model().data(index, QtCore.Qt.EditRole)
+
+        spinBox.setValue(value)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, uiPath='', parent=None):
@@ -29,25 +39,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.model = QtGui.QStandardItemModel(4, 2)
         self.ui.tableView.setModel(self.model)
 
-        # 设置
+        # 设置 Item
+        self.item = SpinBoxDelegate()
+        self.ui.tableView.setItemDelegate(self.item)
+
+        for row in range(4):
+            for column in range(2):
+                index = self.model.index(row, column, QtCore.QModelIndex())
+                self.model.setData(index, (row + 1)*(column + 1))
     
     def closeEvent(self, event):
         '''
         重写closeEvent方法
         '''
-        # 弹出提示对话框
-        reply = QtWidgets.QMessageBox.question(self, 
-                                               '确认退出', 
-                                               "是否要退出程序？", 
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, 
-                                               QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
-            event.accept()
-            quit()
-        else:
-            event.ignore()
-
-    
+        event.accept()
+        quit()
 
 
 if __name__ == '__main__':
