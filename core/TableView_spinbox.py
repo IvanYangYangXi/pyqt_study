@@ -1,21 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# LoadUI_PyQt_Close.py
+# TableView_spinbox.py
 # @Author :  ()
 # @Link   : 
 # @Date   : 2/13/2019, 9:26:06 AM
 
 
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+# Item class
+class SpinBoxDelegate(QtWidgets.QStyledItemDelegate):
+    '''
+    '''
+    # createEditor 返回用于更改模型数据的小部件，可以重新实现以自定义编辑行为。
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QSpinBox(parent)
+        editor.setFrame(False)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, uiPath='', parent=None):
         super(MainWindow, self).__init__(parent)
         # PyQt5 加载ui文件方法
         self.ui = uic.loadUi(uiPath, self)
+
+        # 设置 Model
+        self.model = QtGui.QStandardItemModel(4, 2)
+        self.ui.tableView.setModel(self.model)
+
+        # 设置
     
     def closeEvent(self, event):
         '''
@@ -32,6 +46,8 @@ class MainWindow(QtWidgets.QMainWindow):
             quit()
         else:
             event.ignore()
+
+    
 
 
 if __name__ == '__main__':

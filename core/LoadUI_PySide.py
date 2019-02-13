@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# spinbox_test1.py
+# LoadUI_PySide.py
 # @Author :  ()
 # @Link   : 
 # @Date   : 2/13/2019, 9:26:06 AM
