@@ -8,7 +8,7 @@
 
 
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtGui, QtWidgets, uic
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -17,24 +17,25 @@ class MainWindow(QtWidgets.QMainWindow):
         # PyQt5 加载ui文件方法
         self.ui = uic.loadUi(uiPath, self)
     
-    def closeEvent(self):
+    def closeEvent(self, event):
         '''
         重写closeEvent方法
         '''
-        # super(MainWindow, self).closeEvent()
-
         # 弹出提示对话框
-        reply = QtWidgets.QMessageBox.question(self,
-                                               '本程序',
-                                               "是否要退出程序？",
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        reply = QtWidgets.QMessageBox.question(self, 
+                                               '确认退出', 
+                                               "是否要退出程序？", 
+                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, 
                                                QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
-            self.closeEvent()
+            event.accept()
+            quit()
+        else:
+            event.ignore()
 
 
 if __name__ == '__main__':
-    app = None
+    # app = None
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow('./UI/item_test1.ui')
     w.show()

@@ -25,11 +25,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui = loadui(uiPath)
         self.ui.show()
     
-    def closeEvent(self):
-        '''
-        重写closeEvent方法
-        '''
-        super(MainWindow, self).closeEvent()
 
 
 if __name__ == '__main__':
