@@ -124,9 +124,9 @@ class TreeModel(QtCore.QAbstractItemModel):
 
     def setupModelData(self, parent):
         parents = [parent]
-        parents[-1].appendChild(TreeItem(("aa"), parents[-1]))
-        parents[0].appendChild(TreeItem(("bb"), parents[0]))
-        parents[0].appendChild(TreeItem(("bbbbb"), parents[0]))
+        parents[-1].appendChild(TreeItem(("aa",'b1'), parents[-1]))
+        parents[0].appendChild(TreeItem(("bb",'b2'), parents[0]))
+
 
 a = [70,90,20,50]
 

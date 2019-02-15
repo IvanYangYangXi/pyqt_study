@@ -21,18 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         重写closeEvent方法
         '''
-        # super(MainWindow, self).closeEvent()
-
-        # 弹出提示对话框
-        reply = QtWidgets.QMessageBox.question(self, 
-                                               '本程序', 
-                                               "是否要退出程序？", 
-                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, 
-                                               QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
-            event.closeEvent()
-        else:
-            event.ignore()
+        event.closeEvent()
 
 
 if __name__ == '__main__':
