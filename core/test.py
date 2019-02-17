@@ -21,7 +21,8 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         重写closeEvent方法
         '''
-        event.closeEvent()
+        event.accept()
+        quit()
 
 
 if __name__ == '__main__':

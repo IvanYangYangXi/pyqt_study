@@ -21,6 +21,9 @@ class TreeItem(object):
         if parent:
             parent.appendChild(self)
 
+    def typeInfo(self):
+        return "None"
+
     def appendChild(self, item):
         self.__childItems.append(item)
 
@@ -35,10 +38,9 @@ class TreeItem(object):
 
     def data(self):
         return self.__itemData
-        # try:
-        #     return self.__itemData[column]
-        # except IndexError:
-        #     return None
+
+    def setData(self, value):
+        self.__itemData = value
 
     def parent(self):
         return self.__parentItem
@@ -68,17 +70,33 @@ class TreeItem(object):
         return self.log()
 
 
+class TransformNode(TreeItem):
+    def __init__(self, data, parent):
+        super(TransformNode, self).__init__(data, parent)
+
+    def typeInfo(self):
+        return "Transform"
+
+
+class CameraNode(TreeItem):
+    def __init__(self, data, parent):
+        super(CameraNode, self).__init__(data, parent)
+
+    def typeInfo(self):
+        return "Camera"
+
+
 class TreeModel(QtCore.QAbstractItemModel):
     def __init__(self, data, parent=None):
         super(TreeModel, self).__init__(parent)
 
-        # 设置标题行的内容
+        # 设置初始项的内容
         self.__rootItem = data
         # self.setupModelData(self.__rootItem)
 
     # 设置列数
     def columnCount(self, parent):
-        return 1
+        return 2
 
     # 设置行数
     def rowCount(self, parent):
@@ -93,10 +111,41 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
+    # 返回索引项目存储的数据。
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+
+        # item = index.internalPointer()
+        item = self.getItem(index)
+
+        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
+            if index.column() == 0:
+                return item.data()
+            else:
+                return item.typeInfo()
+
+        if role == QtCore.Qt.DecorationRole:
+            if index.column() == 0:
+                typeInfo = item.typeInfo()
+
+                if typeInfo == "Camera":
+                    return QtGui.QIcon(QtGui.QPixmap('./img/qt-logo.png'))
+
     # 返回一组标志
     def flags(self, index):
         # 基类实现返回一组标志，标志启用item（ItemIsEnabled），并允许它被选中（ItemIsSelectable）。
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+
+    # 编辑数据
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        if index.isValid():
+            if role == QtCore.Qt.EditRole:
+                item = index.internalPointer()
+                item.setData(value)
+
+                return True
+        return False
 
     # 返回给定索引项的父级。如果项目没有父项，则返回无效的QModelIndex。
     def parent(self, index):
@@ -133,20 +182,21 @@ class TreeModel(QtCore.QAbstractItemModel):
     # 设置标题行
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return "Title"
+            if section == 0:
+                return "Title"
+            else:
+                return "typeInfo"
 
         return None
 
-    # 返回索引项目存储的数据。
-    def data(self, index, role):
-        if not index.isValid():
-            return None
-
-        item = index.internalPointer()
-
-        if role == QtCore.Qt.DisplayRole:
-            return item.data()
-
+    # 自定义函数，获取索引项
+    def getItem(self, index):
+        if index.isValid():
+            item = index.internalPointer()
+            if item:
+                return item
+        
+        return self.__rootItem
   
     # def setupModelData(self, parent):
     #     parents = [parent]
@@ -186,9 +236,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     rootNode = TreeItem('A')
-    childNode0 = TreeItem('A1', rootNode)
-    childNode1 = TreeItem('A2', rootNode)
-    childNode2 = TreeItem('A21', childNode1)
+    childNode1 = TreeItem('A1', rootNode)
+    childNode2 = CameraNode('A2', rootNode)
+    childNode11 = TreeItem('A21', childNode1)
+    childNode12 = TreeItem('A21', childNode1)
+    childNode21 = TreeItem('A21', childNode2)
+    childNode211 = TransformNode('A21', childNode21)
 
     print rootNode
 
