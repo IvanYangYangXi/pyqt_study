@@ -14,9 +14,9 @@ class TreeItem(object):
     def __init__(self, data, parent=None):
         super(TreeItem, self).__init__()
         
-        self.__parentItem = parent
-        self.__childItems = []
-        self.__itemData = data
+        self._parentItem = parent
+        self._childItems = []
+        self._itemData = data
 
         if parent:
             parent.appendChild(self)
@@ -25,29 +25,44 @@ class TreeItem(object):
         return "None"
 
     def appendChild(self, item):
-        self.__childItems.append(item)
+        self._childItems.append(item)
+
+    def insertChild(self, position, child):
+        if position < 0 or position > len(self._childItems):
+            return False
+        
+        self._childItems.insert(position, child)
+        child._parentItem = self
+        return True
+
+    def removeChild(self, position):
+        if position < 0 or position > len(self._childItems):
+            return False
+
+        child = self._childItems.pop(position)
+        child._parentItem = None
 
     def child(self, row):
-        return self.__childItems[row]
+        return self._childItems[row]
 
     def childCount(self):
-        return len(self.__childItems)
+        return len(self._childItems)
 
     def columnCount(self):
-        return len(self.__itemData)
+        return len(self._itemData)
 
     def data(self):
-        return self.__itemData
+        return self._itemData
 
     def setData(self, value):
-        self.__itemData = value
+        self._itemData = value
 
     def parent(self):
-        return self.__parentItem
+        return self._parentItem
 
     def row(self):
-        if self.__parentItem:
-            return self.__parentItem.__childItems.index(self)
+        if self._parentItem:
+            return self._parentItem._childItems.index(self)
 
         return 0
 
@@ -58,9 +73,9 @@ class TreeItem(object):
         for i in range(tablevel):
             output += "\t"
 
-        output =output + "|------" + self.__itemData + "\n"
+        output =output + "|------" + self._itemData + "\n"
 
-        for child in self.__childItems:
+        for child in self._childItems:
             output =output + child.log(tablevel)
 
         tablevel -= 1
@@ -91,8 +106,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         super(TreeModel, self).__init__(parent)
 
         # 设置初始项的内容
-        self.__rootItem = data
-        # self.setupModelData(self.__rootItem)
+        self._rootItem = data
+        # self.setupModelData(self._rootItem)
 
     # 设置列数
     def columnCount(self, parent):
@@ -105,7 +120,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             return 0
         
         if not parent.isValid():
-            parentItem = self.__rootItem
+            parentItem = self._rootItem
         else:
             parentItem = parent.internalPointer()
 
@@ -155,7 +170,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         item = index.internalPointer()
         parentItem = item.parent()
 
-        if parentItem == self.__rootItem:
+        if parentItem == self._rootItem:
             return QtCore.QModelIndex()
 
         return self.createIndex(parentItem.row(), 0, parentItem)
@@ -168,7 +183,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         
         # 如果父项不存在，设置 parentItem = rootItem
         if not parent.isValid():
-            parentItem = self.__rootItem
+            parentItem = self._rootItem
         else:
             parentItem = parent.internalPointer()
 
@@ -196,12 +211,34 @@ class TreeModel(QtCore.QAbstractItemModel):
             if item:
                 return item
         
-        return self.__rootItem
+        return self._rootItem
   
-    # def setupModelData(self, parent):
-    #     parents = [parent]
-    #     parents[-1].appendChild(TreeItem(("aa",'b1'), parents[-1]))
-    #     parents[0].appendChild(TreeItem(("bb",'b2'), parents[0]))
+    # 插入多列数据
+    def insertRows(self, position, rows, parent = QtCore.QModelIndex()):
+        
+        parentItem = self.getItem(parent)
+        self.beginInsertRows(parent, position, position + rows - 1) # index, first, last
+                
+        for i in range(rows):
+            childItem = TreeItem('insert item %d'%i)
+            isSuccess = parentItem.insertChild(position, childItem)
+
+        self.endInsertRows()
+
+        return isSuccess
+    
+    # 删除多行数据（插入位置， 插入行数， 父项(默认父项为空项)）
+    def removeRows(self, position, rows, parent = QtCore.QModelIndex()):
+        
+        parentItem = self.getItem(parent)
+        self.beginRemoveRows(parent, position, position + rows - 1)
+
+        for i in range(rows):
+            isSuccess = parentItem.removeChild(position)
+
+        self.endRemoveRows()
+
+        return isSuccess
 
 
 a = [70,90,20,50]
@@ -217,14 +254,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.model = TreeModel(rootNode)
         self.ui.treeView.setModel(self.model)
 
-        # 设置 Item
-        # self.item = SpinBoxDelegate()
-        # self.ui.tableView.setItemDelegate(self.item)
-
-        # for row in range(4):
-        #     for column in range(2):
-        #         index = self.model.index(row, column, QtCore.QModelIndex())
-        #         self.model.setData(index, (row + 1)*(column + 1))
+        # 插入行
+        self.model.insertRows(1,2)
     
     def closeEvent(self, event):
         '''
@@ -249,4 +280,11 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow('./UI/item_test1.ui')
     w.show()
+
+    # 插入行
+    insterP = w.model.index(0, 0, QtCore.QModelIndex()) # 设置父项
+    insterP2 = w.model.index(0, 0, insterP)
+    w.model.insertRows(0, 1, insterP)
+    w.model.insertRows(0, 1, insterP2)
+
     sys.exit(app.exec_())
