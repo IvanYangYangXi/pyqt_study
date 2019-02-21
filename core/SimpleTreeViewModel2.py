@@ -107,11 +107,12 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         # 设置初始项的内容
         self._rootItem = data
-        # self.setupModelData(self._rootItem)
+        
+        self._checkList = ['Checked', 'Unchecked', 'Unchecked', 'Unchecked', 'Unchecked', 'Unchecked', 'Unchecked', 'Unchecked', 'Unchecked']
 
     # 设置列数
     def columnCount(self, parent):
-        return 2
+        return 3
 
     # 设置行数
     def rowCount(self, parent):
@@ -137,6 +138,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if index.column() == 0:
                 return item.data()
+            elif index.column() == 2: # 复选框
+                return self._checkList[index.row()]
             else:
                 return item.typeInfo()
 
@@ -147,19 +150,34 @@ class TreeModel(QtCore.QAbstractItemModel):
                 if typeInfo == "Camera":
                     return QtGui.QIcon(QtGui.QPixmap('./img/qt-logo.png'))
 
+        # 复选框
+        if role == QtCore.Qt.CheckStateRole:
+            if index.column() == 2:
+                if self._checkList[index.row()] == 'Checked':
+                    return QtCore.Qt.Checked
+                else:
+                    return QtCore.Qt.Unchecked
+
     # 返回一组标志
     def flags(self, index):
+
+        # 复选框
+        if index.column() == 2:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable
+
         # 基类实现返回一组标志，标志启用item（ItemIsEnabled），并允许它被选中（ItemIsSelectable）。
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
     # 编辑数据
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if index.isValid():
+            item = index.internalPointer()
+
             if role == QtCore.Qt.EditRole:
-                item = index.internalPointer()
                 item.setData(value)
 
                 return True
+
         return False
 
     # 返回给定索引项的父级。如果项目没有父项，则返回无效的QModelIndex。

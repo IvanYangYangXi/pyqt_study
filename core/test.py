@@ -7,27 +7,43 @@
 # @Date   : 2/13/2019, 1:47:06 PM
 
 
-import sys
-from PyQt5 import QtWidgets, uic
-
-
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, uiPath='', parent=None):
-        super(MainWindow, self).__init__(parent)
-        # PyQt5 加载ui文件方法
-        self.ui = uic.loadUi(uiPath, self)
-    
-    def closeEvent(self, event):
-        '''
-        重写closeEvent方法
-        '''
-        event.accept()
-        quit()
-
-
-if __name__ == '__main__':
-    # app = None
-    app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow('./UI/item_test1.ui')
-    w.show()
-    sys.exit(app.exec_())
+#coding=utf-8
+# from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QApplication, QDialog,QWidget, QFileDialog, QPushButton, QLineEdit, QGridLayout
+import sys, os
+ 
+class MyLoadTskList(QDialog):
+    def __init__(self):
+        QDialog.__init__(self)
+        self.initTaskList()
+    def initTaskList(self):
+        global connectserver
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.model = QStandardItemModel()
+        self.ui.btsure.clicked.connect(self.test)
+        
+        tsklist = [u'北京', u'南京', u'海南', u'青岛', u'西安']
+        #model = QStandardItemModel()
+        for task in tsklist:
+            item = QStandardItem(QString(task))
+            item.setCheckState(False)
+            item.setCheckable(True)
+            self.model.appendRow(item)
+            self.ui.listView.setModel(self.model)
+    def test(self):
+        #获取选中的item的index
+        print "hello this is LoadTskList"
+        lsd = []
+        for i in range(self.model.rowCount()):
+            if self.model.item(i).checkState():
+                index = i + 1
+                lsd.append(index)
+        print lsd
+                
+app = QApplication(sys.argv)
+tsk = MyLoadTskList()
+tsk.show()
+app.exec_()
