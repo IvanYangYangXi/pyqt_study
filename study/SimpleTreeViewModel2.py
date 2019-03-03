@@ -292,11 +292,11 @@ if __name__ == '__main__':
     childNode21 = TreeItem('A21', childNode2)
     childNode211 = TransformNode('A21', childNode21)
 
-    print rootNode
+    print (rootNode)
 
     # app = None
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow('./UI/item_test1.ui')
+    w = MainWindow('./study/UI/item_test1.ui')
     w.show()
 
     # 插入行

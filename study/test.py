@@ -35,13 +35,13 @@ class MyLoadTskList(QDialog):
             self.ui.listView.setModel(self.model)
     def test(self):
         #获取选中的item的index
-        print "hello this is LoadTskList"
+        print ("hello this is LoadTskList")
         lsd = []
         for i in range(self.model.rowCount()):
             if self.model.item(i).checkState():
                 index = i + 1
                 lsd.append(index)
-        print lsd
+        print (lsd)
                 
 app = QApplication(sys.argv)
 tsk = MyLoadTskList()

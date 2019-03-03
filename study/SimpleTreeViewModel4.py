@@ -267,7 +267,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 
 # 窗口组件
-(uiw1_base, uiw1_form) = uic.loadUiType('./UI/Test.ui')
+(uiw1_base, uiw1_form) = uic.loadUiType('./study/UI/Test.ui')
 class NameEditWin(uiw1_base, uiw1_form):
     def __init__(self, parent=None):
         super(NameEditWin, self).__init__(parent)
@@ -293,7 +293,7 @@ class NameEditWin(uiw1_base, uiw1_form):
 
 
 # 窗口组件
-(uiw1_base, uiw1_form) = uic.loadUiType('./UI/Test1.ui')
+(uiw1_base, uiw1_form) = uic.loadUiType('./study/UI/Test1.ui')
 class CameraEditWin(uiw1_base, uiw1_form):
     def __init__(self, parent=None):
         super(CameraEditWin, self).__init__(parent)
@@ -332,7 +332,7 @@ class MainWindow(QtWidgets.QMainWindow):
         childNode21 = TreeItem('A21', childNode2)
         childNode211 = TransformNode('A21', childNode21)
 
-        print rootNode
+        print(rootNode)
 
         # 添加搜索功能
         self._proxyModel = QtCore.QSortFilterProxyModel()
@@ -401,7 +401,7 @@ if __name__ == '__main__':
     
     # app = None
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow('./UI/item_test1.ui')
+    w = MainWindow('./study/UI/item_test1.ui')
     w.show()
 
     # 插入行

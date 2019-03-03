@@ -37,6 +37,6 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     # app = None
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow('./UI/item_test1.ui')
+    w = MainWindow('./study/UI/item_test1.ui')
     w.show()
     sys.exit(app.exec_())

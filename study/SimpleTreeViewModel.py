@@ -190,10 +190,10 @@ if __name__ == '__main__':
     childNode1 = TreeItem('A2', rootNode)
     childNode2 = TreeItem('A21', childNode1)
 
-    print rootNode
+    print (rootNode)
 
     # app = None
     app = QtWidgets.QApplication(sys.argv)
-    w = MainWindow('./UI/item_test1.ui')
+    w = MainWindow('./study/UI/item_test1.ui')
     w.show()
     sys.exit(app.exec_())
