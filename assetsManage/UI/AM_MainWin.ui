@@ -11,7 +11,17 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>AssetsManage</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>qt-logo.png</normaloff>qt-logo.png</iconset>
+  </property>
+  <property name="accessibleName">
+   <string>AssetsManage</string>
+  </property>
+  <property name="accessibleDescription">
+   <string>AssetsManage</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -59,7 +69,7 @@
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
-              <verstretch>4</verstretch>
+              <verstretch>3</verstretch>
              </sizepolicy>
             </property>
             <property name="title">
@@ -166,19 +176,22 @@
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
               <horstretch>0</horstretch>
-              <verstretch>4</verstretch>
+              <verstretch>3</verstretch>
              </sizepolicy>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
+            <property name="handleWidth">
+             <number>2</number>
+            </property>
             <widget class="QTabWidget" name="tabWidget_2">
              <property name="currentIndex">
-              <number>0</number>
+              <number>1</number>
              </property>
              <widget class="QWidget" name="tab_3">
               <attribute name="title">
-               <string>Tab 1</string>
+               <string>资产源文件</string>
               </attribute>
               <layout class="QVBoxLayout" name="verticalLayout">
                <property name="spacing">
@@ -197,18 +210,25 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QLineEdit" name="lineEdit_7"/>
+                <widget class="QLineEdit" name="lineEdit_7">
+                 <property name="placeholderText">
+                  <string>搜索文件</string>
+                 </property>
+                </widget>
                </item>
                <item>
-                <widget class="QListWidget" name="listWidget"/>
+                <widget class="QListWidget" name="listWidget_sourcefile"/>
                </item>
               </layout>
              </widget>
              <widget class="QWidget" name="tab_4">
               <attribute name="title">
-               <string>Tab 2</string>
+               <string>Rig文件</string>
               </attribute>
               <layout class="QVBoxLayout" name="verticalLayout_2">
+               <property name="spacing">
+                <number>1</number>
+               </property>
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -222,7 +242,14 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QListWidget" name="listWidget_3"/>
+                <widget class="QLineEdit" name="lineEdit_5">
+                 <property name="placeholderText">
+                  <string>搜索文件</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QListWidget" name="listWidget_rigfile"/>
                </item>
               </layout>
              </widget>
@@ -233,7 +260,7 @@
              </property>
              <widget class="QWidget" name="tab_5">
               <attribute name="title">
-               <string>Tab 1</string>
+               <string>导出文件</string>
               </attribute>
               <layout class="QVBoxLayout" name="verticalLayout_4">
                <property name="spacing">
@@ -252,10 +279,14 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QLineEdit" name="lineEdit_8"/>
+                <widget class="QLineEdit" name="lineEdit_8">
+                 <property name="placeholderText">
+                  <string>搜索文件</string>
+                 </property>
+                </widget>
                </item>
                <item>
-                <widget class="QListWidget" name="listWidget_4"/>
+                <widget class="QListWidget" name="listWidget_expfile"/>
                </item>
               </layout>
              </widget>
@@ -272,6 +303,9 @@
              <string>list</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_3">
+             <property name="spacing">
+              <number>1</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -287,10 +321,10 @@
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
-                <widget class="QComboBox" name="comboBox"/>
+                <widget class="QComboBox" name="comboBox_list"/>
                </item>
                <item>
-                <widget class="QLabel" name="label_5">
+                <widget class="QLabel" name="label_list">
                  <property name="text">
                   <string>TextLabel</string>
                  </property>
@@ -299,7 +333,7 @@
               </layout>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_2">
+              <widget class="QListWidget" name="listWidget_List">
                <property name="mouseTracking">
                 <bool>false</bool>
                </property>
@@ -351,24 +385,11 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>227</width>
-               <height>395</height>
+               <width>198</width>
+               <height>377</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <spacer name="verticalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
               <item>
                <widget class="QPushButton" name="bt_img">
                 <property name="enabled">
@@ -428,16 +449,16 @@
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QLineEdit" name="lineEdit_3"/>
+                 <widget class="QLineEdit" name="lineEdit_name"/>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QLineEdit" name="lineEdit_4"/>
+                 <widget class="QLineEdit" name="lineEdit_label"/>
                 </item>
                 <item row="3" column="1">
-                 <widget class="QLineEdit" name="lineEdit_6"/>
+                 <widget class="QLineEdit" name="lineEdit_reporter"/>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QDateEdit" name="dateEdit">
+                 <widget class="QDateEdit" name="dateEdit_duedate">
                   <property name="dateTime">
                    <datetime>
                     <hour>0</hour>
@@ -460,11 +481,11 @@
                </layout>
               </item>
               <item>
-               <widget class="QTextEdit" name="textEdit">
+               <widget class="QTextEdit" name="textEdit_describe">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>25</height>
+                  <height>40</height>
                  </size>
                 </property>
                 <property name="placeholderText">
@@ -473,17 +494,17 @@
                </widget>
               </item>
               <item>
-               <widget class="QTextEdit" name="textEdit_2">
-                <property name="minimumSize">
+               <spacer name="verticalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
                  <size>
-                  <width>0</width>
-                  <height>25</height>
+                  <width>20</width>
+                  <height>0</height>
                  </size>
                 </property>
-                <property name="placeholderText">
-                 <string>添加评论</string>
-                </property>
-               </widget>
+               </spacer>
               </item>
              </layout>
             </widget>
@@ -497,8 +518,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>227</width>
-               <height>69</height>
+               <width>198</width>
+               <height>87</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout_3">

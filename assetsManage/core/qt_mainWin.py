@@ -17,6 +17,14 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(parent)
         # PyQt5 加载ui文件方法
         self.ui = uic.loadUi(uiPath, self)
+        # 图标
+        # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
+
+        # ----------- 菜单栏 ------------ #
+        self.ui.actionSetProjectPath.triggered.connect(self.SetProject)
+        # self.ui.pushButton.clicked.connect(self.BTTest)
+        # # 实现 treeWidget item 信号和槽连接
+        # self.ui.treeWidget_folder.itemClicked['QTreeWidgetItem*', 'int'].connect(self.treeWidget_item_click)
 
     def closeEvent(self, event):
         '''
@@ -24,6 +32,9 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         event.accept()
         quit()
+
+    def SetProject(self):
+        pass
 
 
 if __name__ == '__main__':
