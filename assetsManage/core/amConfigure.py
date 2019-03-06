@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# configure.py
+# amConfigure.py
 # @Author : Ivan-杨杨兮 (523166477@qq.com)
 # @Link   : www.cgartech.com
 # @Date   : 2019/3/4 下午11:05:47
@@ -24,7 +24,7 @@ def getProjectPath():
             if os.path.exists(data['projectPath']):
                 return data['projectPath']
         except Exception as e:
-            print('errey')
+            print('DefaultConfigure error')
 
 def setProjectPath(path):
     if os.path.exists(path):
