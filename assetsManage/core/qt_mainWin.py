@@ -367,6 +367,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # 展开子项
         if self.model.rowCount(index) > 0:
             self.ui.treeView_dir.expand(index)
+        # 滚动到选择项
+        self.ui.treeView_dir.scrollTo(index)
 
         print(index.internalPointer())
 
