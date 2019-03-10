@@ -7,7 +7,7 @@
 # @Date   : 2019/3/3 下午5:37:49
 
 
-import sys, os
+import sys, os, re
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import amConfigure
 
@@ -94,6 +94,8 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         # 设置初始项的内容
         self._rootItem = data
+
+        self._projectPath = amConfigure.getProjectPath()
 
         # self.setupModelData()
         
@@ -219,33 +221,54 @@ class TreeModel(QtCore.QAbstractItemModel):
                 return item
         
         return self._rootItem
-  
-    # 插入多列数据
-    def insertRows(self, position, rows, parent = QtCore.QModelIndex()):
+
+    # 插入多行数据
+    def insertRows(self, position, datas, parent = QtCore.QModelIndex()):
         
         parentItem = self.getItem(parent)
-        self.beginInsertRows(parent, position, position + rows - 1) # index, first, last
+        self.beginInsertRows(parent, position, position + len(datas) - 1) # index, first, last
                 
-        for i in range(rows):
-            childItem = TreeItem('insert item %d'%i)
+        for i in datas:
+            childItem = TreeItem(i)
             isSuccess = parentItem.insertChild(position, childItem)
 
         self.endInsertRows()
 
         return isSuccess
     
-    # 删除多行数据（插入位置， 插入行数， 父项(默认父项为空项)）
+    # 删除多行数据（删除位置， 删除行数， 父项(默认父项为空项)）
     def removeRows(self, position, rows, parent = QtCore.QModelIndex()):
         
         parentItem = self.getItem(parent)
         self.beginRemoveRows(parent, position, position + rows - 1)
-
+        isSuccess = False
         for i in range(rows):
             isSuccess = parentItem.removeChild(position)
 
         self.endRemoveRows()
 
         return isSuccess
+
+    # 更新子项
+    def updateChild(self, parent = QtCore.QModelIndex()):
+        # 删除现有子项
+        if self.rowCount(parent) > 0:
+            self.removeRows(0, self.rowCount(parent), parent)
+
+        parentItem = self.getItem(parent) 
+        parentIndex = parent
+        pathAdd = ''
+        path = self._rootItem.data() # 根目录
+        
+        while parentItem != self._rootItem: 
+            pathAdd = '/' + parentIndex.data() + pathAdd # 附加内容到路径
+            parentIndex = parentIndex.parent()
+            parentItem = self.getItem(parentIndex)
+
+        path = path + pathAdd # 附加内容到路径
+        for data in os.listdir(path): # 获取当前路径下的文件
+            if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
+                self.insertRows(self.rowCount(parent), [data], parent) # 插入行
 
     # 初始化数据
     def setupModelData(self, data, parent):
@@ -256,11 +279,45 @@ class defaultTreeModel(TreeModel):
     def __init__(self, data, parent=None):
         super(defaultTreeModel, self).__init__(data, parent)
         
-        self._rootItem = TreeItem('assets')
+        self._rootItem = TreeItem(self._projectPath+'/3D/scenes/Model')
+        self.updateChild()
         
-        self._character = TreeItem('角色', self._rootItem)
-        self._character = TreeItem('道具', self._rootItem)
-        self._character = TreeItem('场景', self._rootItem)
+    def getFiles(self):
+        projectPath = amConfigure.getProjectPath()
+        
+        
+
+fileInfo = {}
+
+def updatePath():
+    projectPath = amConfigure.getProjectPath()
+    # SM_S
+    SM_Character_s = projectPath + '/3D/scenes/Model/Character'
+    SM_Prop_s = projectPath + '/3D/scenes/Model/Prop'
+    SM_Scene_s = projectPath + '/3D/scenes/Model/Scene'
+    # SM_A
+    SM_Character_a = projectPath + '/3D/assets/Model/Character'
+    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
+    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
+    # SK_S
+    SK_Character_s = projectPath + '/3D/scenes/Rig/Character'
+    SK_Prop_s = projectPath + '/3D/scenes/Rig/Prop'
+    SK_Scene_s = projectPath + '/3D/scenes/Rig/Scene'
+    # SM_A
+    SM_Character_a = projectPath + '/3D/assets/Model/Character'
+    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
+    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
+
+    for i in os.listdir(projectPath + '/3D/scenes/Model'):
+        fileInfo[i] = []
+        print(fileInfo)
+    # for parent, dirname, filenames in os.walk(SM_Character_s):
+    #     # print(parent)
+    #     # print(dirname)
+    #     # print(filenames)
+    #     a = re.match(r'(.+[\\/])(.+$)', parent).group(2)
+    #     print(a)
+    
 
 
 # 选择文件夹
@@ -276,9 +333,10 @@ def browse():
 
 # 设置工程目录
 def SetProject():
-        directory = browse()
-        if directory:
-            amConfigure.setProjectPath(directory)
+    directory = browse()
+    if directory:
+        amConfigure.setProjectPath(directory)
+        updatePath()
 
 
 
@@ -292,15 +350,29 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
         
         # 设置 Model
-        self.moedel = defaultTreeModel('0')
-        self.ui.treeView_dir.setModel(self.moedel)
+        self.model = defaultTreeModel('0')
+        self.ui.treeView_dir.setModel(self.model)
 
         # ----------- 菜单栏 ------------ #
         self.ui.actionSetProjectPath.triggered.connect(SetProject)
         # self.ui.pushButton.clicked.connect(self.BTTest)
-        # # 实现 treeWidget item 信号和槽连接
-        # self.ui.treeWidget_folder.itemClicked['QTreeWidgetItem*', 'int'].connect(self.treeWidget_item_click)
+        # ----------- tree ------------- #
+        # 实现 treeWidget item 信号和槽连接
+        self.ui.treeView_dir.selectionModel().selectionChanged.connect(self.setSelection)
+        self.ui.treeView_dir.clicked.connect(self.itemClicked)
 
+    def itemClicked(self, index):
+        # 更新子项
+        self.model.updateChild(index)
+        # 展开子项
+        if self.model.rowCount(index) > 0:
+            self.ui.treeView_dir.expand(index)
+
+        print(index.internalPointer())
+
+    def setSelection(self, selected, deselected):
+        pass
+        
     def closeEvent(self, event):
         '''
         重写closeEvent方法
@@ -319,6 +391,9 @@ def main():
     # 检查工程目录是否存在,不存在则设置工程目录
     if amConfigure.getProjectPath() == None:
         SetProject()
+    else:
+        amConfigure.getProjectPath()
+        updatePath()
 
     sys.exit(app.exec_()) 
 
