@@ -10,6 +10,7 @@
 import sys, os, re
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import amConfigure
+import amDB
 
 
 # ---------------------- TreeItem ---------------------------#
@@ -23,6 +24,15 @@ class TreeItem(object):
 
         if parent:
             parent.appendChild(self)
+
+    def dbData(self):
+        value = amDB.findData('assets', 'local="%s"'%self.local())
+        return value
+
+    def local(self):
+        if self._parentItem == None:
+            return self._itemData
+        return (self._parentItem.local()+'/'+self._itemData)
 
     def typeInfo(self):
         return "None"
@@ -94,14 +104,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         # 设置初始项的内容
         self._rootItem = data
-
+        # 获取项目根目录
         self._projectPath = amConfigure.getProjectPath()
 
         # self.setupModelData()
         
     # 设置列数
     def columnCount(self, parent):
-        return 2
+        return 3
 
     # 设置行数
     def rowCount(self, parent):
@@ -123,21 +133,34 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         # item = index.internalPointer()
         item = self.getItem(index)
+        dbValue = item.dbData()
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if index.column() == 0:
                 return item.data()
-            # elif index.column() == 2: # 复选框
-            #     return self._checkList[index.row()]
-            else:
-                return item.typeInfo()
+            elif index.column() == 2:
+                return item.local()
 
+        # 设置图标
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
-                typeInfo = item.typeInfo()
+                # 绘制
+                pixmap = QtGui.QPixmap(26, 26)
+                pixmap.fill()
+                painter = QtGui.QPainter(pixmap)
 
-                if typeInfo == "Camera":
-                    return QtGui.QIcon(QtGui.QPixmap('./img/qt-logo.png'))
+                if dbValue:
+                    if dbValue[4] == None:
+                        painter.setBrush(QtCore.Qt.NoBrush)
+                    elif dbValue[4] == 0:
+                        painter.setBrush(QtGui.QColor('#355263'))
+                    elif dbValue[4] == 1:
+                        painter.setBrush(QtGui.QColor('#61bd4f'))
+                painter.drawEllipse(3, 3, 20, 20) # 绘制圆
+                # painter.drawRoundedRect(3, 3, 20, 20, 10, 10) # 圆角矩形
+                painter.end()
+                
+                return QtGui.QIcon(pixmap) 
 
         # # 复选框
         # if role == QtCore.Qt.CheckStateRole:
@@ -207,7 +230,11 @@ class TreeModel(QtCore.QAbstractItemModel):
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             if section == 0:
-                return "Title"
+                return "资产"
+            elif section == 1:
+                return "操作"
+            elif section == 2:
+                return "路径"
             else:
                 return "typeInfo"
 
@@ -256,16 +283,9 @@ class TreeModel(QtCore.QAbstractItemModel):
             self.removeRows(0, self.rowCount(parent), parent)
 
         parentItem = self.getItem(parent) 
-        parentIndex = parent
-        pathAdd = ''
-        path = self._rootItem.data() # 根目录
-        
-        while parentItem != self._rootItem: 
-            pathAdd = '/' + parentIndex.data() + pathAdd # 附加内容到路径
-            parentIndex = parentIndex.parent()
-            parentItem = self.getItem(parentIndex)
+        path = parentItem.local()
 
-        path = path + pathAdd # 附加内容到路径
+        # path = path + pathAdd # 附加内容到路径
         for data in os.listdir(path): # 获取当前路径下的文件
             if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
                 self.insertRows(self.rowCount(parent), [data], parent) # 插入行

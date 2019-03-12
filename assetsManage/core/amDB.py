@@ -29,12 +29,13 @@ struct_list = '''
 
 table_assets = '''assets(
     id integer primary key autoincrement,
-    name CHAR(30),
+    name NCHAR(50),
+    local NVARCHAR(500),
     type CHAR(30),
     state int,
     label text,
     dueDate CHAR(30),
-    reporter CHAR(30),
+    reporter NCHAR(30),
     describe text,
     comment text,
     img text,
@@ -44,6 +45,7 @@ table_assets = '''assets(
 )'''
 struct_assets = '''
     name, 
+    local,
     type, 
     state, 
     label,
@@ -113,10 +115,11 @@ def reCreateTable(tableName):
 def insertData(tableName, tableStruct, data):
     conn = sqlite3.connect(amdbPath) # 连接数据库
     conn.text_factory = str
-
-    conn.execute("insert into " + tableName + "(" + tableStruct + \
-        ")" + "VALUES (?%s)"%(',?'*(len(re.findall(r',', tableStruct)))), data) # 执行操作
-
+    try:
+        conn.execute("insert into " + tableName + "(" + tableStruct + \
+            ")" + "VALUES (?%s)"%(',?'*(len(re.findall(r',', tableStruct)))), data) # 执行操作
+    except Exception as e:
+        print(e)
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
@@ -124,10 +127,11 @@ def insertData(tableName, tableStruct, data):
 def insertManyData(tableName, tableStruct, datas):
     conn = sqlite3.connect(amdbPath) # 连接数据库
     conn.text_factory = str
-
-    conn.executemany("insert into " + tableName + "(" + tableStruct + \
-        ")" + "VALUES (?%s)"%(',?'*(len(re.findall(r',', tableStruct)))), datas) # 执行操作
-
+    try:
+        conn.executemany("insert into " + tableName + "(" + tableStruct + \
+            ")" + "VALUES (?%s)"%(',?'*(len(re.findall(r',', tableStruct)))), datas) # 执行操作
+    except Exception as e:
+        print(e)
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
@@ -142,11 +146,11 @@ def findData(tableName, theData, keys=''):
         result = cursor.execute('SELECT ' + keys + ' FROM ' + tableName + ' WHERE ' + theData) # 执行操作
     student = result.fetchone()
 
-    conn.commit() # 保存修改
+    # conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
     return student
     
-# 查询数据（列表）
+# 查询数据（返回列表）
 def findDatas(tableName, theData, keys=''):
     conn = sqlite3.connect(amdbPath) # 连接数据库
     cursor = conn.cursor()
@@ -161,7 +165,7 @@ def findDatas(tableName, theData, keys=''):
     conn.close() # 关闭与数据库的连接
     return students
 
-# 遍历数据（列表）
+# 遍历数据（返回列表）
 def getDatas(tableName, keys=''):
     conn = sqlite3.connect(amdbPath) # 连接数据库
     cursor = conn.cursor()
@@ -179,18 +183,20 @@ def getDatas(tableName, keys=''):
 # 删除数据
 def deleteData(tableName, theData):
     conn = sqlite3.connect(amdbPath) # 连接数据库
-
-    conn.execute('DELETE FROM ' + tableName + ' WHERE ' + theData) # 执行操作
-
+    try:
+        conn.execute('DELETE FROM ' + tableName + ' WHERE ' + theData) # 执行操作
+    except Exception as e:
+        print(e)
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
 # 修改数据
 def updateData(tableName, theData, newData):
     conn = sqlite3.connect(amdbPath) # 连接数据库
-
-    conn.execute('UPDATE ' + tableName + ' SET ' + newData + ' WHERE ' + theData) # 执行操作
-
+    try:
+        conn.execute('UPDATE ' + tableName + ' SET ' + newData + ' WHERE ' + theData) # 执行操作
+    except Exception as e:
+        print(e)
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
@@ -204,4 +210,5 @@ if __name__ == '__main__':
     insertData('list', struct_list, ('n22', False, 'aaa', 'bbb'))
     updateData('list', 'listName="n11"', 'listName="g11",listComplete=1')
     deleteData('list', 'listName="n22"')
-    print(findData('list', "listName='g11'"))
+    print(findData('list', "listName='g11'")[0])
+    print(findData('list', "listName='g11'", 'listName'))
