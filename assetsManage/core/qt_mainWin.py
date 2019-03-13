@@ -140,6 +140,14 @@ class TreeModel(QtCore.QAbstractItemModel):
                 return item.data()
             elif index.column() == 2:
                 return item.local()
+            elif index.column() == 1:
+                if dbValue:
+                    if dbValue[4] == None:
+                        return '未登记'
+                    elif dbValue[4] == 0:
+                        return '未完成'
+                    elif dbValue[4] == 1:
+                        return '完成'
 
         # 设置图标
         if role == QtCore.Qt.DecorationRole:
@@ -156,6 +164,8 @@ class TreeModel(QtCore.QAbstractItemModel):
                         painter.setBrush(QtGui.QColor('#355263'))
                     elif dbValue[4] == 1:
                         painter.setBrush(QtGui.QColor('#61bd4f'))
+                    else:
+                        painter.setBrush(QtCore.Qt.NoBrush)
                 painter.drawEllipse(3, 3, 20, 20) # 绘制圆
                 # painter.drawRoundedRect(3, 3, 20, 20, 10, 10) # 圆角矩形
                 painter.end()
@@ -232,7 +242,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             if section == 0:
                 return "资产"
             elif section == 1:
-                return "操作"
+                return "状态"
             elif section == 2:
                 return "路径"
             else:
@@ -290,9 +300,6 @@ class TreeModel(QtCore.QAbstractItemModel):
             if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
                 self.insertRows(self.rowCount(parent), [data], parent) # 插入行
 
-    # 初始化数据
-    def setupModelData(self, data, parent):
-        pass
 
 
 class defaultTreeModel(TreeModel):
@@ -369,14 +376,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # 图标
         # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
         
-        # 设置 Model
-        self.model = defaultTreeModel('0')
-        self.ui.treeView_dir.setModel(self.model)
-
         # ----------- 菜单栏 ------------ #
         self.ui.actionSetProjectPath.triggered.connect(SetProject)
         # self.ui.pushButton.clicked.connect(self.BTTest)
-        # ----------- tree ------------- #
+
+        # --------------- treeView_dir --------------- #
+        # 设置 Model
+        self.model = defaultTreeModel('0')
+        self.ui.treeView_dir.setModel(self.model)
+        # 右键菜单
+        self.createRightMenu()
+
         # 实现 treeWidget item 信号和槽连接
         self.ui.treeView_dir.selectionModel().selectionChanged.connect(self.setSelection)
         self.ui.treeView_dir.clicked.connect(self.itemClicked)
@@ -391,6 +401,32 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.treeView_dir.scrollTo(index)
 
         print(index.internalPointer())
+
+    # 创建右键菜单(treeView_dir)
+    def createRightMenu(self):
+        # Create right menu for treeview
+        self.ui.treeView_dir.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.ui.treeView_dir.customContextMenuRequested.connect(self.showRightMenu)
+
+    def showRightMenu(self, pos):
+        
+        index = self.ui.treeView_dir.selectionModel().currentIndex()
+        # 创建QMenu
+        rightMenu = QtWidgets.QMenu(self.ui.treeView_dir)
+        item1 = rightMenu.addAction('添加子项')
+        item2 = rightMenu.addAction('test2')
+        rightMenu.addSeparator() # 分隔器
+        item3 = rightMenu.addAction('test3')
+        item3.setEnabled(False)
+        # 添加二级菜单
+        secondMenu = rightMenu.addMenu('二级菜单')
+        item4 = secondMenu.addAction('test4')
+
+        # 将动作与处理函数相关联 
+        # item1.triggered.connect()
+        action = rightMenu.exec_(QtGui.QCursor.pos()) # 在鼠标位置显示
+        if action == item1:
+            print(index.internalPointer().data())
 
     def setSelection(self, selected, deselected):
         pass
