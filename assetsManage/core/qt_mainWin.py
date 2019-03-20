@@ -363,7 +363,6 @@ def SetProject():
     directory = browse()
     if directory:
         amConfigure.setProjectPath(directory)
-        updatePath()
 
 
 
@@ -392,15 +391,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.treeView_dir.clicked.connect(self.itemClicked)
 
     def itemClicked(self, index):
-        # 更新子项
-        self.model.updateChild(index)
-        # 展开子项
-        if self.model.rowCount(index) > 0:
-            self.ui.treeView_dir.expand(index)
-        # 滚动到选择项
-        self.ui.treeView_dir.scrollTo(index)
+        parentItem = self.model.getItem(index) 
+        path = parentItem.local()
 
-        print(index.internalPointer())
+        if os.path.isdir(os.path.join(path)): # 判断目录是否存在
+            if self.model.rowCount(index) == 0:
+                # 更新子项
+                self.model.updateChild(index)
+            # 展开子项
+            if self.model.rowCount(index) > 0:
+                self.ui.treeView_dir.expand(index)
+            # 滚动到选择项
+            self.ui.treeView_dir.scrollTo(index)
+
+            print(index.internalPointer())
+        else:
+            self.model.removeRows(parentItem.row(), 1, self.model.parent(index)) # 删除当前项及子项
 
     # 创建右键菜单(treeView_dir)
     def createRightMenu(self):
@@ -451,7 +457,6 @@ def main():
         SetProject()
     else:
         amConfigure.getProjectPath()
-        updatePath()
 
     sys.exit(app.exec_()) 
 
