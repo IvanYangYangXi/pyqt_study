@@ -50,6 +50,21 @@
         <string>3D</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <property name="horizontalSpacing">
+         <number>6</number>
+        </property>
         <item row="0" column="0">
          <widget class="QSplitter" name="splitter">
           <property name="orientation">
@@ -187,7 +202,7 @@
             </property>
             <widget class="QTabWidget" name="tabWidget_2">
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tab_3">
               <attribute name="title">
@@ -217,7 +232,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QListWidget" name="listWidget_sourcefile"/>
+                <layout class="QVBoxLayout" name="verticalLayout_sourcefile"/>
                </item>
               </layout>
              </widget>
@@ -247,6 +262,9 @@
                   <string>搜索文件</string>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_rigfile"/>
                </item>
                <item>
                 <widget class="QListWidget" name="listWidget_rigfile"/>
@@ -286,7 +304,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QListWidget" name="listWidget_expfile"/>
+                <layout class="QVBoxLayout" name="verticalLayout_expfile"/>
                </item>
               </layout>
              </widget>
@@ -385,8 +403,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>198</width>
-               <height>377</height>
+               <width>204</width>
+               <height>376</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -519,7 +537,7 @@
                <x>0</x>
                <y>0</y>
                <width>198</width>
-               <height>87</height>
+               <height>90</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout_3">

@@ -9,6 +9,9 @@
 
 import sys, os, re
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+import win32gui
+import win32con
+from ctypes.wintypes import LONG, HWND, UINT, WPARAM, LPARAM, FILETIME
 import amConfigure
 import amDB
 
@@ -111,7 +114,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         
     # 设置列数
     def columnCount(self, parent):
-        return 3
+        return 1
 
     # 设置行数
     def rowCount(self, parent):
@@ -365,6 +368,33 @@ def SetProject():
         amConfigure.setProjectPath(directory)
 
 
+class DropListWidget(QtWidgets.QListWidget):
+    def __init__(self, parent=None):
+        super(DropListWidget, self).__init__(parent)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+
+
+    def dragEnterEvent(self, event):
+        print('a')
+        # if event.mimeData().hasFormat("application/x-icon-and-text"):
+        #     event.accept()
+        # else:
+        #     event.ignore()
+
+
+    # def dragMoveEvent(self, event):
+    #     if event.mimeData().hasFormat("application/x-icon-and-text"):
+    #         event.setDropAction(Qt.MoveAction)
+    #         event.accept()
+    #     else:
+    #         event.ignore()
+
+
+    def dropEvent(self, event):
+        print('b')
+
+
 
 # ------------------------ 主窗口 class -----------------------------#
 class MainWindow(QtWidgets.QMainWindow):
@@ -374,7 +404,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui = uic.loadUi(uiPath, self)
         # 图标
         # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
-        
+
+        # add widget
+        self.listWidget_sourcefile = DropListWidget(self)
+        self.ui.verticalLayout_sourcefile.addWidget(self.listWidget_sourcefile)
+        self.listWidget_expfile = DropListWidget(self)
+        self.ui.verticalLayout_expfile.addWidget(self.listWidget_expfile)
+
         # ----------- 菜单栏 ------------ #
         self.ui.actionSetProjectPath.triggered.connect(SetProject)
         # self.ui.pushButton.clicked.connect(self.BTTest)
@@ -388,13 +424,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # 实现 treeWidget item 信号和槽连接
         self.ui.treeView_dir.selectionModel().selectionChanged.connect(self.setSelection)
-        self.ui.treeView_dir.clicked.connect(self.itemClicked)
+        self.ui.treeView_dir.clicked.connect(self.dirTreeItemClicked)
 
-    def itemClicked(self, index):
+        # --------------- listWidget --------------- #
+        # self.listWidget_sourcefile.clicked.connect(self.listWidgetItemClicked)
+        self.listWidget_sourcefile.setAcceptDrops(True)
+        self.listWidget_sourcefile.setDragEnabled(True)
+        
+
+
+    def testEvn(self, env):
+        print('1')
+
+    # dirTree item 点击事件
+    def dirTreeItemClicked(self, index):
         parentItem = self.model.getItem(index) 
         path = parentItem.local()
 
-        if os.path.isdir(os.path.join(path)): # 判断目录是否存在
+        if os.path.isdir(path): # 判断目录是否存在
             if self.model.rowCount(index) == 0:
                 # 更新子项
                 self.model.updateChild(index)
@@ -404,9 +451,46 @@ class MainWindow(QtWidgets.QMainWindow):
             # 滚动到选择项
             self.ui.treeView_dir.scrollTo(index)
 
+            # 更新资产文件列表
+            self.listWidget_sourcefile.clear()
+            for data in os.listdir(path): # 获取当前路径下的文件
+                if os.path.isfile(os.path.join(path, data)): # 判断是否是文件
+                    self.listWidget_sourcefile.addItem(data)
+            
+            # 更新导出文件列表
+            self.listWidget_expfile.clear()
+            assetsPath = path.replace('scenes/Model', 'assets')
+            if os.path.isdir(assetsPath): # 判断目录是否存在
+                for data in os.listdir(assetsPath): # 获取当前路径下的文件
+                    if os.path.isfile(os.path.join(assetsPath, data)): # 判断是否是文件
+                        self.listWidget_expfile.addItem(data)
+
             print(index.internalPointer())
         else:
             self.model.removeRows(parentItem.row(), 1, self.model.parent(index)) # 删除当前项及子项
+    
+    # 鼠标拖入事件
+    def dragEnterEvent(self, evn):
+ 
+        self.setWindowTitle('鼠标拖入窗口了')
+        self.ui.lineEdit_7.setText(evn.mimeData().text())
+        # self.QLabl.setText('文件路径：\n'+evn.mimeData().text())
+        #鼠标放开函数事件
+        evn.accept()
+    # 鼠标放开执行
+    def dropEvent(self, evn):
+        self.setWindowTitle('鼠标放开了')
+    def dragMoveEvent(self, evn):
+        print('鼠标移入')
+
+    # listWidget item 点击事件
+    # def listWidgetItemClicked(self, index):
+    #     # r = index.text()
+    #     r = index.row()
+    #     point = win32gui.GetCursorPos()
+    #     hwnd = win32gui.WindowFromPoint(point)
+    #     win32gui.SendMessage(hwnd, win32con.WM_DROPFILES , WPARAM(FILETIME("E:\\Git_Res\\pyqt_study\\assetsManage\\UI\\qt-logo.png")), 0)
+    #     print(r)
 
     # 创建右键菜单(treeView_dir)
     def createRightMenu(self):
@@ -419,19 +503,23 @@ class MainWindow(QtWidgets.QMainWindow):
         index = self.ui.treeView_dir.selectionModel().currentIndex()
         # 创建QMenu
         rightMenu = QtWidgets.QMenu(self.ui.treeView_dir)
-        item1 = rightMenu.addAction('添加子项')
-        item2 = rightMenu.addAction('test2')
+        itemOpen = rightMenu.addAction('打开路径')
         rightMenu.addSeparator() # 分隔器
-        item3 = rightMenu.addAction('test3')
-        item3.setEnabled(False)
-        # 添加二级菜单
-        secondMenu = rightMenu.addMenu('二级菜单')
-        item4 = secondMenu.addAction('test4')
+        itemRefresh = rightMenu.addAction('刷新')
+        itemRename = rightMenu.addAction('重命名')
+        itemAddChild = rightMenu.addAction('添加子项')
+        itemAddChild = rightMenu.addAction('删除当前项')
+        rightMenu.addSeparator() # 分隔器
+        itemCollection = rightMenu.addAction('添加到快速访问')
+        # item3.setEnabled(False)
+        # # 添加二级菜单
+        # secondMenu = rightMenu.addMenu('二级菜单')
+        # item4 = secondMenu.addAction('test4')
 
         # 将动作与处理函数相关联 
         # item1.triggered.connect()
         action = rightMenu.exec_(QtGui.QCursor.pos()) # 在鼠标位置显示
-        if action == item1:
+        if action == itemOpen:
             print(index.internalPointer().data())
 
     def setSelection(self, selected, deselected):
