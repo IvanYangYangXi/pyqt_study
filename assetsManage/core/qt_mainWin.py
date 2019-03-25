@@ -14,7 +14,11 @@ import win32con
 from ctypes.wintypes import LONG, HWND, UINT, WPARAM, LPARAM, FILETIME
 import amConfigure
 import amDB
+import shutil
 
+
+fileInfo = {}
+lastPath = './'
 
 # ---------------------- TreeItem ---------------------------#
 class TreeItem(object):
@@ -35,6 +39,8 @@ class TreeItem(object):
     def local(self):
         if self._parentItem == None:
             return self._itemData
+        if self._parentItem._itemData == '快速访问':
+            return amConfigure.getCollectionPath()[self.row()]
         return (self._parentItem.local()+'/'+self._itemData)
 
     def typeInfo(self):
@@ -105,11 +111,13 @@ class TreeModel(QtCore.QAbstractItemModel):
     def __init__(self, data, parent=None):
         super(TreeModel, self).__init__(parent)
 
-        # 设置初始项的内容
-        self._rootItem = data
         # 获取项目根目录
         self._projectPath = amConfigure.getProjectPath()
 
+        # 设置初始项
+        self._rootItem = TreeItem(self._projectPath)
+        # 设置快速访问项
+        # self._collectionItem = TreeItem('快速访问', self._rootItem)
         # self.setupModelData()
         
     # 设置列数
@@ -191,6 +199,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         #     return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable
 
         # 基类实现返回一组标志，标志启用item（ItemIsEnabled），并允许它被选中（ItemIsSelectable）。
+        if index.data() == '快速访问':
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
     # 编辑数据
@@ -298,11 +308,21 @@ class TreeModel(QtCore.QAbstractItemModel):
         parentItem = self.getItem(parent) 
         path = parentItem.local()
 
-        # path = path + pathAdd # 附加内容到路径
-        for data in os.listdir(path): # 获取当前路径下的文件
-            if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
-                self.insertRows(self.rowCount(parent), [data], parent) # 插入行
+        if parent == QtCore.QModelIndex():
+            self.insertRows(self.rowCount(parent), ['快速访问'], parent) # 插入快速访问行
+            # 设置快速访问项
+            # self._collectionItem = TreeItem('快速访问', self._rootItem)
 
+        if parentItem.data() == '快速访问':
+            for data in amConfigure.getCollectionPath(): # 获取快速访问路径
+                fpath,fname = os.path.split(data)
+                self.insertRows(self.rowCount(parent), [fname], parent) # 插入快速访问item
+            # print(amConfigure.getCollectionPath())
+        else:
+            # path = path + pathAdd # 附加内容到路径
+            for data in os.listdir(path): # 获取当前路径下的文件
+                if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
+                    self.insertRows(self.rowCount(parent), [data], parent) # 插入行
 
 
 class defaultTreeModel(TreeModel):
@@ -310,14 +330,9 @@ class defaultTreeModel(TreeModel):
         super(defaultTreeModel, self).__init__(data, parent)
         
         self._rootItem = TreeItem(self._projectPath+'/3D/scenes/Model')
-        self.updateChild()
-        
-    def getFiles(self):
-        projectPath = amConfigure.getProjectPath()
-        
+        self.updateChild()        
         
 
-fileInfo = {}
 
 def updatePath():
     projectPath = amConfigure.getProjectPath()
@@ -348,7 +363,9 @@ def updatePath():
     #     a = re.match(r'(.+[\\/])(.+$)', parent).group(2)
     #     print(a)
     
-
+# 错误信息
+def showErrorMsg(msg):
+    print(msg)
 
 # 选择文件夹
 def browse():
@@ -368,32 +385,145 @@ def SetProject():
         amConfigure.setProjectPath(directory)
 
 
+# ------------ 文件列表 -------------------#
 class DropListWidget(QtWidgets.QListWidget):
     def __init__(self, parent=None):
         super(DropListWidget, self).__init__(parent)
         self.setAcceptDrops(True)
-        self.setDragEnabled(True)
+        self.setDragEnabled(True) # 开启可拖放事件
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection) # 按住CTRL可多选
+        # 创建右键菜单
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showListRightMenu)
+        # 双击打开文件
+        self.itemDoubleClicked.connect(self.openFile)
 
+        self._path = '' # 列表显示内容所在目录
 
+    # 拖放进入事件
     def dragEnterEvent(self, event):
-        print('a')
-        # if event.mimeData().hasFormat("application/x-icon-and-text"):
-        #     event.accept()
-        # else:
-        #     event.ignore()
+        print(event.mimeData().urls())  # 文件所有的路径
+        print(event.mimeData().text())  # 文件路径
+        print(event.mimeData().formats())  # 支持的所有格式
+        if self._path != '':
+            if event.mimeData().hasUrls():
+                event.accept()
+            elif event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
+                items = self.selectedItems()
+                urls = []
+                for i in items:
+                    urls.append(QtCore.QUrl('file:///' + os.path.join(self._path, i.text())))
+                event.mimeData().setUrls(urls)
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            showErrorMsg('请先选择目录')
+            event.ignore()
 
+    # 拖放移动事件
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.accept()
+        elif event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.accept()
+        else:
+            event.ignore()
 
-    # def dragMoveEvent(self, event):
-    #     if event.mimeData().hasFormat("application/x-icon-and-text"):
-    #         event.setDropAction(Qt.MoveAction)
-    #         event.accept()
-    #     else:
-    #         event.ignore()
-
-
+    # 拖放释放事件
     def dropEvent(self, event):
-        print('b')
+        if event.mimeData().hasUrls():
+            pathes = event.mimeData().urls()
+            for path in pathes:
+                s = str(path)
+                s = s.replace("PyQt5.QtCore.QUrl('file:///",'')
+                s = s.replace("')", '')
+                if os.path.isfile(s):
+                    # fpath,fname = os.path.split(s)
+                    if not os.path.exists(self._path):
+                        os.makedirs(self._path) # 创建路径
+                    shutil.copy(s, self._path)
+            self.updateList()
 
+    # 更新文件列表
+    def updateList(self):
+        self.clear()
+        if os.path.exists(self._path):
+            for data in os.listdir(self._path): # 获取当前路径下的文件
+                if os.path.isfile(os.path.join(self._path, data)): # 判断是否是文件
+                    self.addItem(data)
+
+    # 创建右键菜单(list)
+    def showListRightMenu(self, pos):
+        global lastPath
+
+        # 创建QMenu
+        rightMenu = QtWidgets.QMenu(self)
+        itemOpen = rightMenu.addAction('打开路径')
+        itemImport = rightMenu.addAction('导入文件')
+        itemRefresh = rightMenu.addAction('刷新')
+        rightMenu.addSeparator() # 分隔器
+        itemRename = rightMenu.addAction('重命名')
+        # itemAddChild = rightMenu.addAction('添加子项')
+        itemDelete = rightMenu.addAction('删除选择项')
+        rightMenu.addSeparator() # 分隔器
+        # item3.setEnabled(False)
+        # # 添加二级菜单
+        # secondMenu = rightMenu.addMenu('二级菜单')
+        # item4 = secondMenu.addAction('test4')
+
+        items = self.selectedItems()
+        # 禁用项
+        if len(items) != 1:
+            itemRename.setEnabled(False)
+        if len(items) == 0:
+            itemDelete.setEnabled(False)
+        # 将动作与处理函数相关联 
+        # item1.triggered.connect()
+
+        action = rightMenu.exec_(QtGui.QCursor.pos()) # 在鼠标位置显示
+        # ------------------ 右键事件 ------------------- #
+        # 导入文件 amConfigure.getProjectPath()
+        if action == itemImport:
+            if self._path != '':
+                files = QtWidgets.QFileDialog.getOpenFileNames(None, "Find File", lastPath)[0] # 选择文件
+                lastPath = os.path.split(files[0])[0] # 设置选择文件的目录
+                for path in files:
+                    if os.path.isfile(path):
+                        if not os.path.exists(self._path):
+                            os.makedirs(self._path) # 创建路径
+                        shutil.copy(path, self._path) # 复制文件
+                self.updateList()
+            else:
+                showErrorMsg('请先选择目录')
+        # 打开路径（在资源管理器中显示）
+        if action == itemOpen:
+            if os.path.exists(self._path):
+                os.startfile(self._path)
+        # 刷新
+        if action == itemRefresh:
+            self.updateList()
+        # 重命名
+        if action == itemRename:
+            value, ok = QtWidgets.QInputDialog.getText(self, "重命名", "请输入文本:", QtWidgets.QLineEdit.Normal, os.path.splitext(items[0].text())[0])
+            if ok:
+                try:
+                    os.rename(os.path.join(self._path, items[0].text()), os.path.join(self._path, value + os.path.splitext(items[0].text())[1]))
+                    self.updateList()
+                except Exception as e:
+                    showErrorMsg('重命名失败，错误代码：%s'%(e))
+        # 删除选择项
+        if action == itemDelete:
+            for i in items:
+                path = os.path.join(self._path, i.text())
+                os.remove(path)    #删除文件
+            self.updateList()
+        
+    # 打开文件(可打开外部程序)
+    def openFile(self, item):
+        os.startfile(os.path.join(self._path, item.text()))
 
 
 # ------------------------ 主窗口 class -----------------------------#
@@ -405,11 +535,19 @@ class MainWindow(QtWidgets.QMainWindow):
         # 图标
         # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
 
-        # add widget
+        # -------------- add widget --------------------#
+        # 资产源文件
         self.listWidget_sourcefile = DropListWidget(self)
         self.ui.verticalLayout_sourcefile.addWidget(self.listWidget_sourcefile)
+        # 导出文件
         self.listWidget_expfile = DropListWidget(self)
         self.ui.verticalLayout_expfile.addWidget(self.listWidget_expfile)
+        # Rig文件
+        self.listWidget_rigfile = DropListWidget(self)
+        self.ui.verticalLayout_rigfile.addWidget(self.listWidget_rigfile)
+        # 贴图文件
+        self.listWidget_expTex = DropListWidget(self)
+        self.ui.verticalLayout_expTex.addWidget(self.listWidget_expTex)
 
         # ----------- 菜单栏 ------------ #
         self.ui.actionSetProjectPath.triggered.connect(SetProject)
@@ -423,15 +561,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.createRightMenu()
 
         # 实现 treeWidget item 信号和槽连接
-        self.ui.treeView_dir.selectionModel().selectionChanged.connect(self.setSelection)
+        # self.ui.treeView_dir.selectionModel().selectionChanged.connect(self.setSelection)
         self.ui.treeView_dir.clicked.connect(self.dirTreeItemClicked)
 
         # --------------- listWidget --------------- #
         # self.listWidget_sourcefile.clicked.connect(self.listWidgetItemClicked)
-        self.listWidget_sourcefile.setAcceptDrops(True)
-        self.listWidget_sourcefile.setDragEnabled(True)
-        
-
 
     def testEvn(self, env):
         print('1')
@@ -441,8 +575,8 @@ class MainWindow(QtWidgets.QMainWindow):
         parentItem = self.model.getItem(index) 
         path = parentItem.local()
 
-        if os.path.isdir(path): # 判断目录是否存在
-            if self.model.rowCount(index) == 0:
+        if os.path.isdir(path) or parentItem.data() == '快速访问': # 判断目录是否存在 或 为 '快速访问' 项
+            if self.model.rowCount(index) == 0 or parentItem.data() == '快速访问':
                 # 更新子项
                 self.model.updateChild(index)
             # 展开子项
@@ -451,37 +585,29 @@ class MainWindow(QtWidgets.QMainWindow):
             # 滚动到选择项
             self.ui.treeView_dir.scrollTo(index)
 
-            # 更新资产文件列表
-            self.listWidget_sourcefile.clear()
-            for data in os.listdir(path): # 获取当前路径下的文件
-                if os.path.isfile(os.path.join(path, data)): # 判断是否是文件
-                    self.listWidget_sourcefile.addItem(data)
-            
-            # 更新导出文件列表
-            self.listWidget_expfile.clear()
+            # fpath,fname = os.path.split(path)
+
+            # ------------- 更新列表 -----------------#
+            # 资产文件
+            self.listWidget_sourcefile._path = path
+            self.listWidget_sourcefile.updateList()
+            # 导出文件
             assetsPath = path.replace('scenes/Model', 'assets')
-            if os.path.isdir(assetsPath): # 判断目录是否存在
-                for data in os.listdir(assetsPath): # 获取当前路径下的文件
-                    if os.path.isfile(os.path.join(assetsPath, data)): # 判断是否是文件
-                        self.listWidget_expfile.addItem(data)
+            self.listWidget_expfile._path = assetsPath
+            self.listWidget_expfile.updateList()
+            # Rig文件
+            rigPath = path.replace('Model', 'Rig')
+            self.listWidget_rigfile._path = rigPath
+            self.listWidget_rigfile.updateList()
+            # 贴图文件
+            texPath = os.path.join(assetsPath, 'Textures')
+            self.listWidget_expTex._path = texPath
+            self.listWidget_expTex.updateList()
 
             print(index.internalPointer())
         else:
             self.model.removeRows(parentItem.row(), 1, self.model.parent(index)) # 删除当前项及子项
     
-    # 鼠标拖入事件
-    def dragEnterEvent(self, evn):
- 
-        self.setWindowTitle('鼠标拖入窗口了')
-        self.ui.lineEdit_7.setText(evn.mimeData().text())
-        # self.QLabl.setText('文件路径：\n'+evn.mimeData().text())
-        #鼠标放开函数事件
-        evn.accept()
-    # 鼠标放开执行
-    def dropEvent(self, evn):
-        self.setWindowTitle('鼠标放开了')
-    def dragMoveEvent(self, evn):
-        print('鼠标移入')
 
     # listWidget item 点击事件
     # def listWidgetItemClicked(self, index):
@@ -496,11 +622,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def createRightMenu(self):
         # Create right menu for treeview
         self.ui.treeView_dir.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.treeView_dir.customContextMenuRequested.connect(self.showRightMenu)
+        self.ui.treeView_dir.customContextMenuRequested.connect(self.showTreeRightMenu)
 
-    def showRightMenu(self, pos):
-        
-        index = self.ui.treeView_dir.selectionModel().currentIndex()
+    def showTreeRightMenu(self, pos):
         # 创建QMenu
         rightMenu = QtWidgets.QMenu(self.ui.treeView_dir)
         itemOpen = rightMenu.addAction('打开路径')
@@ -508,19 +632,53 @@ class MainWindow(QtWidgets.QMainWindow):
         itemRefresh = rightMenu.addAction('刷新')
         itemRename = rightMenu.addAction('重命名')
         itemAddChild = rightMenu.addAction('添加子项')
-        itemAddChild = rightMenu.addAction('删除当前项')
+        itemRemoveChild = rightMenu.addAction('删除当前项')
         rightMenu.addSeparator() # 分隔器
         itemCollection = rightMenu.addAction('添加到快速访问')
+        itemUnCollection = rightMenu.addAction('从快速访问移除')
         # item3.setEnabled(False)
         # # 添加二级菜单
         # secondMenu = rightMenu.addMenu('二级菜单')
         # item4 = secondMenu.addAction('test4')
 
+        index = self.ui.treeView_dir.selectionModel().currentIndex() # 选择的项
+        currentItem = self.model.getItem(index) 
+        parentItem = self.model.parent(index)
+        path = currentItem.local()
+        # 禁用菜单项
+        if not index.data():
+            itemRename.setEnabled(False)
+            itemAddChild.setEnabled(False)
+            itemRemoveChild.setEnabled(False)
+            itemCollection.setEnabled(False)
+            itemUnCollection.setEnabled(False)
+        if index.data() == '快速访问':
+            itemOpen.setEnabled(False)
+            itemRename.setEnabled(False)
+            itemAddChild.setEnabled(False)
+            itemRemoveChild.setEnabled(False)
+            itemCollection.setEnabled(False)
+            itemUnCollection.setEnabled(False)
+        if parentItem.data() == '快速访问':
+            itemCollection.setEnabled(False)
+            itemRemoveChild.setEnabled(False)
+        else:
+            itemUnCollection.setEnabled(False)
+        print(path)
         # 将动作与处理函数相关联 
         # item1.triggered.connect()
         action = rightMenu.exec_(QtGui.QCursor.pos()) # 在鼠标位置显示
+        # 打开路径
         if action == itemOpen:
-            print(index.internalPointer().data())
+            if os.path.exists(path):
+                os.startfile(path)
+        # 从快速访问移除
+        if action == itemUnCollection:
+            self.model.removeRows(currentItem.row(), 1, self.model.parent(index))
+            amConfigure.removeCollectionPath(path)
+        # 添加到快速访问
+        if action == itemCollection:
+            amConfigure.addCollectionPath(path)
 
     def setSelection(self, selected, deselected):
         pass

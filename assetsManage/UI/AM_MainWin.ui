@@ -158,7 +158,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QLineEdit" name="lineEdit_2">
+              <widget class="QLineEdit" name="lineEdit_tag">
                <property name="placeholderText">
                 <string>搜索标签</string>
                </property>
@@ -266,9 +266,6 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_rigfile"/>
                </item>
-               <item>
-                <widget class="QListWidget" name="listWidget_rigfile"/>
-               </item>
               </layout>
              </widget>
             </widget>
@@ -305,6 +302,38 @@
                </item>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_expfile"/>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tab">
+              <attribute name="title">
+               <string>贴图文件</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_8">
+               <property name="spacing">
+                <number>1</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLineEdit" name="lineEdit_9">
+                 <property name="placeholderText">
+                  <string>搜索文件</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_expTex"/>
                </item>
               </layout>
              </widget>
