@@ -40,10 +40,10 @@ def getProjectPath():
 
 def setProjectPath(path):
     if os.path.exists(path):
-        data = loadConfig()
-        data['projectPath'] = path
+        # data = loadConfig()
+        pathInfo['projectPath'] = path
         f = open(configPath, 'w')
-        f.write(json.dumps(data)) 
+        f.write(json.dumps(pathInfo)) 
 
 # ------------ 搜藏目录 --------------------- #
 def getCollectionPath():

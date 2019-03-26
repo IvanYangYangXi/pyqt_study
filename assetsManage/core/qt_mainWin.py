@@ -330,6 +330,17 @@ class defaultTreeModel(TreeModel):
         super(defaultTreeModel, self).__init__(data, parent)
         
         self._rootItem = TreeItem(self._projectPath+'/3D/scenes/Model')
+        
+        # ----------- 初始化路径 ---------------- #
+        if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
+            os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
+        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
+            os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
+        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
+            os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
+        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
+            os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
+
         self.updateChild()        
         
 
@@ -516,10 +527,12 @@ class DropListWidget(QtWidgets.QListWidget):
                     showErrorMsg('重命名失败，错误代码：%s'%(e))
         # 删除选择项
         if action == itemDelete:
-            for i in items:
-                path = os.path.join(self._path, i.text())
-                os.remove(path)    #删除文件
-            self.updateList()
+            reply = QtWidgets.QMessageBox.warning(self, "消息框标题",  "确认删除选择项?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if reply:
+                for i in items:
+                    path = os.path.join(self._path, i.text())
+                    os.remove(path)    #删除文件
+                self.updateList()
         
     # 打开文件(可打开外部程序)
     def openFile(self, item):
@@ -628,11 +641,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # 创建QMenu
         rightMenu = QtWidgets.QMenu(self.ui.treeView_dir)
         itemOpen = rightMenu.addAction('打开路径')
-        rightMenu.addSeparator() # 分隔器
         itemRefresh = rightMenu.addAction('刷新')
-        itemRename = rightMenu.addAction('重命名')
         itemAddChild = rightMenu.addAction('添加子项')
-        itemRemoveChild = rightMenu.addAction('删除当前项')
+        rightMenu.addSeparator() # 分隔器
+        itemRename = rightMenu.addAction('重命名')
+        itemRemove = rightMenu.addAction('删除当前项')
         rightMenu.addSeparator() # 分隔器
         itemCollection = rightMenu.addAction('添加到快速访问')
         itemUnCollection = rightMenu.addAction('从快速访问移除')
@@ -649,19 +662,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if not index.data():
             itemRename.setEnabled(False)
             itemAddChild.setEnabled(False)
-            itemRemoveChild.setEnabled(False)
+            itemRemove.setEnabled(False)
             itemCollection.setEnabled(False)
             itemUnCollection.setEnabled(False)
         if index.data() == '快速访问':
             itemOpen.setEnabled(False)
             itemRename.setEnabled(False)
             itemAddChild.setEnabled(False)
-            itemRemoveChild.setEnabled(False)
+            itemRemove.setEnabled(False)
             itemCollection.setEnabled(False)
             itemUnCollection.setEnabled(False)
         if parentItem.data() == '快速访问':
+            itemAddChild.setEnabled(False)
             itemCollection.setEnabled(False)
-            itemRemoveChild.setEnabled(False)
+            itemRemove.setEnabled(False)
         else:
             itemUnCollection.setEnabled(False)
         print(path)
@@ -672,6 +686,36 @@ class MainWindow(QtWidgets.QMainWindow):
         if action == itemOpen:
             if os.path.exists(path):
                 os.startfile(path)
+            else:
+                showErrorMsg('目录不存在')
+        # 添加子项
+        if action == itemAddChild:
+            if os.path.exists(path):
+                value, ok = QtWidgets.QInputDialog.getText(self, "添加子项", "请输入文本:", QtWidgets.QLineEdit.Normal, 'NewForder')
+                if not os.path.isdir(os.path.join(path, value.strip())):
+                    os.makedirs(os.path.join(path, value.strip()))
+                    self.model.updateChild(index) # 更新子项
+                else:
+                    showErrorMsg('目录已存在')
+        # 刷新
+        if action == itemRefresh:
+            # 更新子项
+            self.model.updateChild(index)
+        # 重命名
+        if action == itemRename:
+            value, ok = QtWidgets.QInputDialog.getText(self, "重命名", "请输入文本:", QtWidgets.QLineEdit.Normal, currentItem.data())
+            if ok:
+                try:
+                    os.rename(path, os.path.join(os.path.split(path)[0], value))
+                    currentItem.setData(value)
+                except Exception as e:
+                    showErrorMsg('重命名失败，错误代码：%s'%(e))
+        # 删除选择项
+        if action == itemRemove:
+            reply = QtWidgets.QMessageBox.warning(self, "消息框标题",  "确认删除选择项?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if reply:
+                os.removedirs(path)    # 递归删除文件夹
+                self.model.removeRows(currentItem.row(), 1, self.model.parent(index))
         # 从快速访问移除
         if action == itemUnCollection:
             self.model.removeRows(currentItem.row(), 1, self.model.parent(index))

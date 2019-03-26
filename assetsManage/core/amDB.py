@@ -38,10 +38,8 @@ table_assets = '''assets(
     reporter NCHAR(30),
     describe text,
     comment text,
-    img text,
-    video text,
-    tasklist int,
-    FOREIGN KEY (tasklist) REFERENCES list(id)
+    table_list int,
+    FOREIGN KEY (table_list) REFERENCES list(id)
 )'''
 struct_assets = '''
     name, 
@@ -53,9 +51,7 @@ struct_assets = '''
     reporter,
     describe,
     comment,
-    img,
-    video,
-    tasklist
+    table_list
 '''
 
 amdbPath = os.path.dirname(os.path.dirname(__file__)) + '/data/amdb.db'
