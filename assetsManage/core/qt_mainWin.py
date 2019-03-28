@@ -539,6 +539,30 @@ class DropListWidget(QtWidgets.QListWidget):
         os.startfile(os.path.join(self._path, item.text()))
 
 
+class imgListWidget(DropListWidget):
+    def __init__(self, parent=None):
+        super(imgListWidget, self).__init__(parent)
+
+        self.setViewMode(self.IconMode)
+        self.setIconSize(QtCore.QSize(64, 64))  #Icon 大小
+        # self.setSpacing(12)  # 间距大小
+
+
+    # 更新文件列表
+    def updateList(self):
+        self.clear()
+        if os.path.exists(self._path):
+            for data in os.listdir(self._path): # 获取当前路径下的文件
+                if os.path.isfile(os.path.join(self._path, data)): # 判断是否是文件
+                    ext = os.path.splitext(data)[1].lower()
+                    if ext in ['.jgp', '.png', '.jpeg', '.bmp', '.tga', '.gif']:
+                        # self.addItem(data)
+                        imgItem = QtWidgets.QListWidgetItem(self)
+                        imgItem.setIcon(QtGui.QIcon(os.path.join(self._path, data)))
+                        imgItem.setText(data)
+                        imgItem.setTextAlignment(QtCore.Qt.AlignHCenter)
+                        # imgItem.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
 # ------------------------ 主窗口 class -----------------------------#
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, uiPath='', parent=None):
@@ -549,18 +573,21 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ui.setWindowIcon(QtGui.QIcon(os.path.dirname(os.path.dirname(__file__)) + '/UI/qt-logo.png'))
 
         # -------------- add widget --------------------#
-        # 资产源文件
+        # 资产源文件列表
         self.listWidget_sourcefile = DropListWidget(self)
         self.ui.verticalLayout_sourcefile.addWidget(self.listWidget_sourcefile)
-        # 导出文件
+        # 导出文件列表
         self.listWidget_expfile = DropListWidget(self)
         self.ui.verticalLayout_expfile.addWidget(self.listWidget_expfile)
-        # Rig文件
+        # Rig文件列表
         self.listWidget_rigfile = DropListWidget(self)
         self.ui.verticalLayout_rigfile.addWidget(self.listWidget_rigfile)
-        # 贴图文件
+        # 贴图文件列表
         self.listWidget_expTex = DropListWidget(self)
         self.ui.verticalLayout_expTex.addWidget(self.listWidget_expTex)
+        # 缩略图列表
+        self.listWidget_img = imgListWidget(self)
+        self.ui.verticalLayout_img.addWidget(self.listWidget_img)
 
         # ----------- 菜单栏 ------------ #
         self.ui.actionSetProjectPath.triggered.connect(SetProject)
@@ -606,7 +633,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.listWidget_sourcefile.updateList()
             # 导出文件
             assetsPath = path.replace('scenes/Model', 'assets')
-            self.listWidget_expfile._path = assetsPath
+            meshPath = os.path.join(assetsPath, 'Meshes')
+            self.listWidget_expfile._path = meshPath
             self.listWidget_expfile.updateList()
             # Rig文件
             rigPath = path.replace('Model', 'Rig')
@@ -616,6 +644,11 @@ class MainWindow(QtWidgets.QMainWindow):
             texPath = os.path.join(assetsPath, 'Textures')
             self.listWidget_expTex._path = texPath
             self.listWidget_expTex.updateList()
+
+            # 缩略图列表
+            imgPath = path.replace('scenes', 'images')
+            self.listWidget_img._path = imgPath
+            self.listWidget_img.updateList()
 
             print(index.internalPointer())
         else:
