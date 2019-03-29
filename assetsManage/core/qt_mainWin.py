@@ -19,6 +19,7 @@ import shutil
 
 fileInfo = {}
 lastPath = './'
+w = None
 
 # ---------------------- TreeItem ---------------------------#
 class TreeItem(object):
@@ -111,15 +112,18 @@ class TreeModel(QtCore.QAbstractItemModel):
     def __init__(self, data, parent=None):
         super(TreeModel, self).__init__(parent)
 
-        # 获取项目根目录
-        self._projectPath = amConfigure.getProjectPath()
+        # 初始化
+        self.setupModel(data)
 
+    # 初始化  
+    def setupModel(self, data):
+        # 获取项目根目录
+        self._projectPath = data
         # 设置初始项
         self._rootItem = TreeItem(self._projectPath)
-        # 设置快速访问项
-        # self._collectionItem = TreeItem('快速访问', self._rootItem)
-        # self.setupModelData()
-        
+
+        self.updateChild()
+
     # 设置列数
     def columnCount(self, parent):
         return 1
@@ -318,7 +322,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                 fpath,fname = os.path.split(data)
                 self.insertRows(self.rowCount(parent), [fname], parent) # 插入快速访问item
             # print(amConfigure.getCollectionPath())
-        else:
+        elif os.path.isdir(path):
             # path = path + pathAdd # 附加内容到路径
             for data in os.listdir(path): # 获取当前路径下的文件
                 if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
@@ -328,72 +332,28 @@ class TreeModel(QtCore.QAbstractItemModel):
 class defaultTreeModel(TreeModel):
     def __init__(self, data, parent=None):
         super(defaultTreeModel, self).__init__(data, parent)
+               
         
+    # 初始化
+    def setupModel(self, data):
+        # 获取项目根目录
+        self._projectPath = data
+        # 设置初始项
         self._rootItem = TreeItem(self._projectPath+'/3D/scenes/Model')
         
         # ----------- 初始化路径 ---------------- #
-        if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
-            os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
-        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
-            os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
-        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
-            os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
-        if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
-            os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
+        if os.path.isdir(self._projectPath):
+            if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
+                os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
+            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
+                os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
+            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
+                os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
+            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
+                os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
 
         self.updateChild()        
-        
 
-
-def updatePath():
-    projectPath = amConfigure.getProjectPath()
-    # SM_S
-    SM_Character_s = projectPath + '/3D/scenes/Model/Character'
-    SM_Prop_s = projectPath + '/3D/scenes/Model/Prop'
-    SM_Scene_s = projectPath + '/3D/scenes/Model/Scene'
-    # SM_A
-    SM_Character_a = projectPath + '/3D/assets/Model/Character'
-    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
-    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
-    # SK_S
-    SK_Character_s = projectPath + '/3D/scenes/Rig/Character'
-    SK_Prop_s = projectPath + '/3D/scenes/Rig/Prop'
-    SK_Scene_s = projectPath + '/3D/scenes/Rig/Scene'
-    # SM_A
-    SM_Character_a = projectPath + '/3D/assets/Model/Character'
-    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
-    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
-
-    for i in os.listdir(projectPath + '/3D/scenes/Model'):
-        fileInfo[i] = []
-        print(fileInfo)
-    # for parent, dirname, filenames in os.walk(SM_Character_s):
-    #     # print(parent)
-    #     # print(dirname)
-    #     # print(filenames)
-    #     a = re.match(r'(.+[\\/])(.+$)', parent).group(2)
-    #     print(a)
-    
-# 错误信息
-def showErrorMsg(msg):
-    print(msg)
-
-# 选择文件夹
-def browse():
-    if amConfigure.getProjectPath() == None:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Find Dir", \
-            QtCore.QDir.currentPath())
-    else:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Find Dir", \
-            amConfigure.getProjectPath())
-
-    return directory
-
-# 设置工程目录
-def SetProject():
-    directory = browse()
-    if directory:
-        amConfigure.setProjectPath(directory)
 
 
 # ------------ 文件列表 -------------------#
@@ -595,8 +555,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # --------------- treeView_dir --------------- #
         # 设置 Model
-        self.model = defaultTreeModel('0')
-        self.ui.treeView_dir.setModel(self.model)
+        self.defaultTreeModel = defaultTreeModel(amConfigure.getProjectPath())
+        self.ui.treeView_dir.setModel(self.defaultTreeModel)
         # 右键菜单
         self.createRightMenu()
 
@@ -605,22 +565,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.treeView_dir.clicked.connect(self.dirTreeItemClicked)
 
         # --------------- listWidget --------------- #
-        # self.listWidget_sourcefile.clicked.connect(self.listWidgetItemClicked)
+        self.listWidget_img.clicked.connect(self.listWidget_img_ItemClicked)
 
     def testEvn(self, env):
         print('1')
 
     # dirTree item 点击事件
     def dirTreeItemClicked(self, index):
-        parentItem = self.model.getItem(index) 
+        parentItem = self.defaultTreeModel.getItem(index) 
         path = parentItem.local()
 
         if os.path.isdir(path) or parentItem.data() == '快速访问': # 判断目录是否存在 或 为 '快速访问' 项
-            if self.model.rowCount(index) == 0 or parentItem.data() == '快速访问':
+            if self.defaultTreeModel.rowCount(index) == 0 or parentItem.data() == '快速访问':
                 # 更新子项
-                self.model.updateChild(index)
+                self.defaultTreeModel.updateChild(index)
             # 展开子项
-            if self.model.rowCount(index) > 0:
+            if self.defaultTreeModel.rowCount(index) > 0:
                 self.ui.treeView_dir.expand(index)
             # 滚动到选择项
             self.ui.treeView_dir.scrollTo(index)
@@ -652,17 +612,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
             print(index.internalPointer())
         else:
-            self.model.removeRows(parentItem.row(), 1, self.model.parent(index)) # 删除当前项及子项
+            self.defaultTreeModel.removeRows(parentItem.row(), 1, self.defaultTreeModel.parent(index)) # 删除当前项及子项
     
-
-    # listWidget item 点击事件
-    # def listWidgetItemClicked(self, index):
-    #     # r = index.text()
-    #     r = index.row()
-    #     point = win32gui.GetCursorPos()
-    #     hwnd = win32gui.WindowFromPoint(point)
-    #     win32gui.SendMessage(hwnd, win32con.WM_DROPFILES , WPARAM(FILETIME("E:\\Git_Res\\pyqt_study\\assetsManage\\UI\\qt-logo.png")), 0)
-    #     print(r)
+    # listWidget_img item 点击事件
+    def listWidget_img_ItemClicked(self, index):
+        imgfolder = self.listWidget_img._path
+        print(index.data())
 
     # 创建右键菜单(treeView_dir)
     def createRightMenu(self):
@@ -688,8 +643,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # item4 = secondMenu.addAction('test4')
 
         index = self.ui.treeView_dir.selectionModel().currentIndex() # 选择的项
-        currentItem = self.model.getItem(index) 
-        parentItem = self.model.parent(index)
+        currentItem = self.defaultTreeModel.getItem(index) 
+        parentItem = self.defaultTreeModel.parent(index)
         path = currentItem.local()
         # 禁用菜单项
         if not index.data():
@@ -727,13 +682,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 value, ok = QtWidgets.QInputDialog.getText(self, "添加子项", "请输入文本:", QtWidgets.QLineEdit.Normal, 'NewForder')
                 if not os.path.isdir(os.path.join(path, value.strip())):
                     os.makedirs(os.path.join(path, value.strip()))
-                    self.model.updateChild(index) # 更新子项
+                    self.defaultTreeModel.updateChild(index) # 更新子项
                 else:
                     showErrorMsg('目录已存在')
         # 刷新
         if action == itemRefresh:
             # 更新子项
-            self.model.updateChild(index)
+            self.defaultTreeModel.updateChild(index)
         # 重命名
         if action == itemRename:
             value, ok = QtWidgets.QInputDialog.getText(self, "重命名", "请输入文本:", QtWidgets.QLineEdit.Normal, currentItem.data())
@@ -748,10 +703,10 @@ class MainWindow(QtWidgets.QMainWindow):
             reply = QtWidgets.QMessageBox.warning(self, "消息框标题",  "确认删除选择项?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             if reply:
                 os.removedirs(path)    # 递归删除文件夹
-                self.model.removeRows(currentItem.row(), 1, self.model.parent(index))
+                self.defaultTreeModel.removeRows(currentItem.row(), 1, self.defaultTreeModel.parent(index))
         # 从快速访问移除
         if action == itemUnCollection:
-            self.model.removeRows(currentItem.row(), 1, self.model.parent(index))
+            self.defaultTreeModel.removeRows(currentItem.row(), 1, self.defaultTreeModel.parent(index))
             amConfigure.removeCollectionPath(path)
         # 添加到快速访问
         if action == itemCollection:
@@ -768,15 +723,79 @@ class MainWindow(QtWidgets.QMainWindow):
         quit()
 
 
+
+
+def updatePath():
+    projectPath = amConfigure.getProjectPath()
+    # SM_S
+    SM_Character_s = projectPath + '/3D/scenes/Model/Character'
+    SM_Prop_s = projectPath + '/3D/scenes/Model/Prop'
+    SM_Scene_s = projectPath + '/3D/scenes/Model/Scene'
+    # SM_A
+    SM_Character_a = projectPath + '/3D/assets/Model/Character'
+    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
+    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
+    # SK_S
+    SK_Character_s = projectPath + '/3D/scenes/Rig/Character'
+    SK_Prop_s = projectPath + '/3D/scenes/Rig/Prop'
+    SK_Scene_s = projectPath + '/3D/scenes/Rig/Scene'
+    # SM_A
+    SM_Character_a = projectPath + '/3D/assets/Model/Character'
+    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
+    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
+
+    for i in os.listdir(projectPath + '/3D/scenes/Model'):
+        fileInfo[i] = []
+        print(fileInfo)
+    # for parent, dirname, filenames in os.walk(SM_Character_s):
+    #     # print(parent)
+    #     # print(dirname)
+    #     # print(filenames)
+    #     a = re.match(r'(.+[\\/])(.+$)', parent).group(2)
+    #     print(a)
+    
+
+# 错误信息
+def showErrorMsg(msg):
+    print(msg)
+
+# 选择文件夹
+def browse():
+    directory = ''
+    if amConfigure.getProjectPath() != None:
+        if os.path.isdir(amConfigure.getProjectPath()):
+            directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Find Dir", \
+                amConfigure.getProjectPath())
+        else:
+            directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Find Dir", \
+                QtCore.QDir.currentPath())
+    else:
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Find Dir", \
+            QtCore.QDir.currentPath())
+
+    return directory
+
+# 设置工程目录
+def SetProject():
+    directory = browse()
+    if directory != '':
+        amConfigure.setProjectPath(directory)
+        w.defaultTreeModel.setupModel(amConfigure.getProjectPath()) # 更新 defaultTreeModel 
+    elif not os.path.isdir(amConfigure.getProjectPath()):
+        w.close() # 退出窗口程序
+
+
 def main():
+    print(os.path.isdir(amConfigure.getProjectPath()))
     # 启动窗口
+    global w
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow(os.path.dirname(os.path.dirname(__file__)) +\
         '/UI/AM_MainWin.ui')
     w.show()
 
     # 检查工程目录是否存在,不存在则设置工程目录
-    if amConfigure.getProjectPath() == None:
+    if not os.path.isdir(amConfigure.getProjectPath()):
         SetProject()
     else:
         amConfigure.getProjectPath()

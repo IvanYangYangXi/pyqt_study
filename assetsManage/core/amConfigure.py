@@ -33,8 +33,10 @@ def loadConfig():
 def getProjectPath():
     try:
         data = loadConfig()
-        if os.path.exists(data['projectPath']):
+        if os.path.isdir(data['projectPath']):
             return data['projectPath']
+        else:
+            return ''
     except Exception as e:
         print('DefaultConfigure error')
 
