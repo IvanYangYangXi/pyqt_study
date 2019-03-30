@@ -14,7 +14,7 @@ import win32con
 from ctypes.wintypes import LONG, HWND, UINT, WPARAM, LPARAM, FILETIME
 import amConfigure
 import amDB
-import shutil
+import shutil # 文件夹操作
 
 
 fileInfo = {}
@@ -338,20 +338,35 @@ class defaultTreeModel(TreeModel):
     def setupModel(self, data):
         # 获取项目根目录
         self._projectPath = data
-        # 设置初始项
-        self._rootItem = TreeItem(self._projectPath+'/3D/scenes/Model')
         
-        # ----------- 初始化路径 ---------------- #
-        if os.path.isdir(self._projectPath):
-            if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
-                os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
-            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
-                os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
-            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
-                os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
-            if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
-                os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
+        if amConfigure.getProjectBranch() == '':
+            # ----------- 初始化路径 ---------------- #
+            modelPath = self._projectPath+'/3D/scenes/Model'
+            if os.path.isdir(self._projectPath):
+                if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
+                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
+                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
+                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
+        if amConfigure.getProjectBranch() == 'branches':
+            # ----------- 初始化路径 ---------------- #
+            modelPath = self._projectPath+'/3D/branches/scenes/Model'
+            if os.path.isdir(self._projectPath):
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model') # 创建路径
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Character'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Character') # 角色
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Prop'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Prop') # 道具
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Scene'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Scene') # 场景
 
+        # 设置初始项
+        self._rootItem = TreeItem(modelPath)
+        
         self.updateChild()        
 
 
@@ -515,8 +530,11 @@ class imgListWidget(DropListWidget):
             for data in os.listdir(self._path): # 获取当前路径下的文件
                 if os.path.isfile(os.path.join(self._path, data)): # 判断是否是文件
                     ext = os.path.splitext(data)[1].lower()
-                    if ext in ['.jgp', '.png', '.jpeg', '.bmp', '.tga', '.gif']:
-                        # self.addItem(data)
+                    if ext in ['.jpg', '.png', '.jpeg', '.bmp', '.tga', '.gif']:
+                        # image = QtGui.QImage()
+                        # image.load(os.path.join(self._path, data))
+                        # image.save(os.path.join(self._path, data))
+
                         imgItem = QtWidgets.QListWidgetItem(self)
                         imgItem.setIcon(QtGui.QIcon(os.path.join(self._path, data)))
                         imgItem.setText(data)
@@ -610,14 +628,33 @@ class MainWindow(QtWidgets.QMainWindow):
             self.listWidget_img._path = imgPath
             self.listWidget_img.updateList()
 
+            if self.listWidget_img.count() > 0:
+                imgfolder = self.listWidget_img._path
+                imgpath = os.path.join(imgfolder, self.listWidget_img.item(0).text())
+                imgpath = imgpath.replace("\\", "/")
+                pixmap_mask = QtGui.QPixmap(imgpath)
+                self.ui.bt_img.setStyleSheet("QPushButton{border-image: url(%s)}"%(imgpath)) # 按钮样式
+                scale = pixmap_mask.height()*(self.ui.bt_img.width() / pixmap_mask.width()) 
+                self.ui.bt_img.setFixedHeight(scale) # 设置按钮的高度
+            else:
+                self.ui.bt_img.setStyleSheet("QPushButton{border-image: url(./)}") # 按钮样式
             print(index.internalPointer())
         else:
             self.defaultTreeModel.removeRows(parentItem.row(), 1, self.defaultTreeModel.parent(index)) # 删除当前项及子项
-    
+
+    # QtWidgets.QPushButton().setMaximumSize
     # listWidget_img item 点击事件
     def listWidget_img_ItemClicked(self, index):
         imgfolder = self.listWidget_img._path
-        print(index.data())
+        imgpath = os.path.join(imgfolder, index.data())
+        imgpath = imgpath.replace("\\", "/")
+        pixmap_mask = QtGui.QPixmap(imgpath)
+        self.ui.bt_img.setStyleSheet("QPushButton{border-image: url(%s)}"%(imgpath)) # 按钮样式
+        scale = pixmap_mask.height()*(self.ui.bt_img.width() / pixmap_mask.width()) 
+        self.ui.bt_img.setFixedHeight(scale) # 设置按钮的高度
+        
+        
+        print(index)
 
     # 创建右键菜单(treeView_dir)
     def createRightMenu(self):
@@ -782,11 +819,12 @@ def SetProject():
         amConfigure.setProjectPath(directory)
         w.defaultTreeModel.setupModel(amConfigure.getProjectPath()) # 更新 defaultTreeModel 
     elif not os.path.isdir(amConfigure.getProjectPath()):
-        w.close() # 退出窗口程序
+        showErrorMsg('工程目录不存在')
+        # w.close() # 退出窗口程序
 
 
 def main():
-    print(os.path.isdir(amConfigure.getProjectPath()))
+    # print(os.path.isdir(amConfigure.getProjectPath()))
     # 启动窗口
     global w
     app = QtWidgets.QApplication(sys.argv)

@@ -411,9 +411,12 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>274</width>
-               <height>393</height>
+               <width>260</width>
+               <height>470</height>
               </rect>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <property name="leftMargin">
@@ -431,7 +434,7 @@
               <item>
                <widget class="QPushButton" name="bt_img">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -447,8 +450,8 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>450</width>
-                  <height>400</height>
+                  <width>16777215</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="text">
@@ -613,6 +616,11 @@
      <string>文件</string>
     </property>
     <addaction name="actionSetProjectPath"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpenProject"/>
+    <addaction name="actionNewProject"/>
+    <addaction name="separator"/>
+    <addaction name="actionUpdataTree"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -667,6 +675,21 @@
   <action name="actionManageList">
    <property name="text">
     <string>管理清单</string>
+   </property>
+  </action>
+  <action name="actionOpenProject">
+   <property name="text">
+    <string>打开项目</string>
+   </property>
+  </action>
+  <action name="actionNewProject">
+   <property name="text">
+    <string>打开新项目</string>
+   </property>
+  </action>
+  <action name="actionUpdataTree">
+   <property name="text">
+    <string>刷新文件夹树</string>
    </property>
   </action>
  </widget>
