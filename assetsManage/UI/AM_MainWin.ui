@@ -615,9 +615,15 @@
     <property name="title">
      <string>文件</string>
     </property>
+    <widget class="QMenu" name="menu_openProject">
+     <property name="title">
+      <string>打开项目</string>
+     </property>
+     <addaction name="action1"/>
+    </widget>
     <addaction name="actionSetProjectPath"/>
     <addaction name="separator"/>
-    <addaction name="actionOpenProject"/>
+    <addaction name="menu_openProject"/>
     <addaction name="actionNewProject"/>
     <addaction name="separator"/>
     <addaction name="actionUpdataTree"/>
@@ -677,11 +683,6 @@
     <string>管理清单</string>
    </property>
   </action>
-  <action name="actionOpenProject">
-   <property name="text">
-    <string>打开项目</string>
-   </property>
-  </action>
   <action name="actionNewProject">
    <property name="text">
     <string>打开新项目</string>
@@ -690,6 +691,11 @@
   <action name="actionUpdataTree">
    <property name="text">
     <string>刷新文件夹树</string>
+   </property>
+  </action>
+  <action name="action1">
+   <property name="text">
+    <string>1</string>
    </property>
   </action>
  </widget>

@@ -568,7 +568,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.verticalLayout_img.addWidget(self.listWidget_img)
 
         # ----------- 菜单栏 ------------ #
-        self.ui.actionSetProjectPath.triggered.connect(SetProject)
+        # 设置工程目录
+        self.ui.actionSetProjectPath.triggered.connect(SetProjectPath)
+        # 打开工程
+        self.updateOpenProjectMenu()
+        # 打开新项目
+        self.ui.actionNewProject.triggered.connect(openNewProject)
+        
         # self.ui.pushButton.clicked.connect(self.BTTest)
 
         # --------------- treeView_dir --------------- #
@@ -587,6 +593,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def testEvn(self, env):
         print('1')
+
+    # 菜单栏打开工程项按钮
+    def updateOpenProjectMenu(self):
+        # 打开工程
+        OpenProjectMenu = self.ui.menu_openProject
+        OpenProjectMenu.clear()
+        projectOpenMenus = {}
+        projectRemoveMenus = {}
+        for i in amConfigure.getAllProjectNames():
+            projectsMenu = OpenProjectMenu.addMenu(i)
+            projectOpenMenus[i] = projectsMenu.addAction('打开工程')
+            projectRemoveMenus[i] = projectsMenu.addAction('删除工程')
+            projectOpenMenus[i].triggered.connect(lambda: openProject(i))
+            projectRemoveMenus[i].triggered.connect(lambda: removeProject(i))
 
     # dirTree item 点击事件
     def dirTreeItemClicked(self, index):
@@ -737,7 +757,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     showErrorMsg('重命名失败，错误代码：%s'%(e))
         # 删除选择项
         if action == itemRemove:
-            reply = QtWidgets.QMessageBox.warning(self, "消息框标题",  "确认删除选择项?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            reply = QtWidgets.QMessageBox.warning(self, "警告",  "确认删除选择项?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             if reply:
                 os.removedirs(path)    # 递归删除文件夹
                 self.defaultTreeModel.removeRows(currentItem.row(), 1, self.defaultTreeModel.parent(index))
@@ -764,26 +784,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 def updatePath():
     projectPath = amConfigure.getProjectPath()
-    # SM_S
     SM_Character_s = projectPath + '/3D/scenes/Model/Character'
-    SM_Prop_s = projectPath + '/3D/scenes/Model/Prop'
-    SM_Scene_s = projectPath + '/3D/scenes/Model/Scene'
-    # SM_A
-    SM_Character_a = projectPath + '/3D/assets/Model/Character'
-    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
-    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
-    # SK_S
-    SK_Character_s = projectPath + '/3D/scenes/Rig/Character'
-    SK_Prop_s = projectPath + '/3D/scenes/Rig/Prop'
-    SK_Scene_s = projectPath + '/3D/scenes/Rig/Scene'
-    # SM_A
-    SM_Character_a = projectPath + '/3D/assets/Model/Character'
-    SM_Prop_a = projectPath + '/3D/assets/Model/Prop'
-    SM_Scene_a = projectPath + '/3D/assets/Model/Scene'
-
-    for i in os.listdir(projectPath + '/3D/scenes/Model'):
-        fileInfo[i] = []
-        print(fileInfo)
     # for parent, dirname, filenames in os.walk(SM_Character_s):
     #     # print(parent)
     #     # print(dirname)
@@ -795,6 +796,7 @@ def updatePath():
 # 错误信息
 def showErrorMsg(msg):
     print(msg)
+    w.ui.statusbar.showMessage(msg)
 
 # 选择文件夹
 def browse():
@@ -813,7 +815,7 @@ def browse():
     return directory
 
 # 设置工程目录
-def SetProject():
+def SetProjectPath():
     directory = browse()
     if directory != '':
         amConfigure.setProjectPath(directory)
@@ -821,6 +823,36 @@ def SetProject():
     elif not os.path.isdir(amConfigure.getProjectPath()):
         showErrorMsg('工程目录不存在')
         # w.close() # 退出窗口程序
+
+# 打开工程
+def openProject(name):
+    oldProjectName = amConfigure.getLastProjectName()
+    amConfigure.setLastProjectName(name)
+    if os.path.isdir(amConfigure.getProjectPath()):
+        w.defaultTreeModel.setupModel(amConfigure.getProjectPath())
+    else:
+        SetProjectPath()
+
+# 删除工程
+def removeProject(name):
+    amConfigure.removeProject(name)
+    w.updateOpenProjectMenu()
+
+# 打开新工程
+def openNewProject():
+    oldProjectName = amConfigure.getLastProjectName()
+    value, ok = QtWidgets.QInputDialog.getText(None, "工程名称", "请输入工程名称:", QtWidgets.QLineEdit.Normal, 'NewProject')
+    if ok:
+        while value in amConfigure.getAllProjectNames():
+            value, ok = QtWidgets.QInputDialog.getText(None, "工程名称", "名称已存在，请重新输入:", QtWidgets.QLineEdit.Normal, 'NewProject')
+            if not ok:
+                break
+        if ok:
+            directory = browse()
+            if directory != '':
+                amConfigure.addNewProject(value, directory)
+                w.defaultTreeModel.setupModel(amConfigure.getProjectPath())
+                w.updateOpenProjectMenu()
 
 
 def main():
@@ -834,7 +866,7 @@ def main():
 
     # 检查工程目录是否存在,不存在则设置工程目录
     if not os.path.isdir(amConfigure.getProjectPath()):
-        SetProject()
+        SetProjectPath()
     else:
         amConfigure.getProjectPath()
 

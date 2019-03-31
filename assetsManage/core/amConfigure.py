@@ -31,7 +31,22 @@ def loadConfig():
             return data
         except Exception as e:
             f.close()
-            print('DefaultConfigure error:%s:%e%s'%(e))
+            print('DefaultConfigure error:%s'%(e))
+
+# 获得所有工程名称
+def getAllProjectNames():
+    try:
+        data = loadConfig()
+        AllProjectName = list(data.keys()) # 返回一个字典所有的键, 转换为列表形式
+        if ('lastProject' in AllProjectName) and len(AllProjectName) > 1: # 判断字典是否存在某个key
+            AllProjectName.remove('lastProject')
+            return AllProjectName
+    except Exception as e:
+        f = open(configPath, 'w')
+        f.write(json.dumps(defaultConfig)) 
+        f.close()
+        print('DefaultConfigure error:%s'%(e))
+        return ['DefaultProject']
 
 # 获取最后一次打开的工程名称
 def getLastProjectName():
@@ -43,16 +58,19 @@ def getLastProjectName():
             else:
                 f = open(configPath, 'w')
                 f.write(json.dumps(data)) 
+                f.close()
                 return 'DefaultProject'
         else:
             f = open(configPath, 'w')
             f.write(json.dumps(defaultConfig)) 
+            f.close()
             return 'DefaultProject'
     except Exception as e:
         f = open(configPath, 'w')
         f.write(json.dumps(defaultConfig)) 
+        f.close()
+        print('DefaultConfigure error:%s'%(e))
         return 'DefaultProject'
-        print('lastProject error')
 
 # 设置最后一次打开的工程名称
 def setLastProjectName(name):
@@ -60,6 +78,7 @@ def setLastProjectName(name):
     data['lastProject'] = name
     f = open(configPath, 'w')
     f.write(json.dumps(data)) 
+    f.close()
 
 # 添加新工程
 def addNewProject(name, path):
@@ -67,11 +86,13 @@ def addNewProject(name, path):
     if not (name in data.keys()):
         data[name] = {
             'projectPath' : path,
+            'branch' : '',
             'collectionPath' : []
         }
         data['lastProject'] = name
         f = open(configPath, 'w')
         f.write(json.dumps(data)) 
+        f.close()
         return True
     else:
         return False
@@ -100,6 +121,7 @@ def setProjectPath(path):
             data[getLastProjectName()]['projectPath'] = path
             f = open(configPath, 'w')
             f.write(json.dumps(data)) 
+            f.close()
         except Exception as e:
             print('DefaultConfigure error:%s'%e)
 
@@ -113,6 +135,7 @@ def getProjectBranch():
         data[getLastProjectName()]['branch'] = ''
         f = open(configPath, 'w')
         f.write(json.dumps(data)) 
+        f.close()
         print('DefaultConfigure error:%s'%e)
         return ''
 
@@ -122,13 +145,13 @@ def setProjectBranch(branch):
         data[getLastProjectName()]['branch'] = branch
         f = open(configPath, 'w')
         f.write(json.dumps(data)) 
+        f.close()
     except Exception as e:
         print('DefaultConfigure error:%s'%e)
 
 # ------------ 搜藏目录 --------------------- #
 def getCollectionPath():
     if os.path.exists(configPath): # 判断文件是否存在
-        f = open(configPath, 'r')
         try:
             data = loadConfig()
             return data[getLastProjectName()]['collectionPath']
@@ -142,6 +165,7 @@ def addCollectionPath(path):
             data[getLastProjectName()]['collectionPath'].append(path)
             f = open(configPath, 'w')
             f.write(json.dumps(data)) 
+            f.close()
 
 def removeCollectionPath(path):
     data = loadConfig()
@@ -149,6 +173,7 @@ def removeCollectionPath(path):
         data[getLastProjectName()]['collectionPath'].remove(path)
         f = open(configPath, 'w')
         f.write(json.dumps(data)) 
+        f.close()
 
 
 if __name__ == '__main__':
