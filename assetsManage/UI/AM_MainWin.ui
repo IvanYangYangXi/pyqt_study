@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>924</width>
-    <height>603</height>
+    <width>757</width>
+    <height>515</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@
           <widget class="QSplitter" name="splitter_dir">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>1</horstretch>
+             <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -165,7 +165,7 @@
           <widget class="QSplitter" name="splitter_file">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>3</horstretch>
+             <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
@@ -411,8 +411,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>260</width>
-               <height>470</height>
+               <width>190</width>
+               <height>394</height>
               </rect>
              </property>
              <property name="layoutDirection">
@@ -519,6 +519,16 @@
                   </property>
                  </widget>
                 </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>经办人：</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLineEdit" name="lineEdit_operator"/>
+                </item>
                </layout>
               </item>
               <item>
@@ -607,7 +617,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>924</width>
+     <width>757</width>
      <height>23</height>
     </rect>
    </property>

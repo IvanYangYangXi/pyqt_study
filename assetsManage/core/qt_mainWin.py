@@ -610,11 +610,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # dirTree item 点击事件
     def dirTreeItemClicked(self, index):
-        parentItem = self.defaultTreeModel.getItem(index) 
-        path = parentItem.local()
+        currentItem = self.defaultTreeModel.getItem(index) 
+        path = currentItem.local()
 
-        if os.path.isdir(path) or parentItem.data() == '快速访问': # 判断目录是否存在 或 为 '快速访问' 项
-            if self.defaultTreeModel.rowCount(index) == 0 or parentItem.data() == '快速访问':
+        if currentItem.data() == '快速访问': # 判断为 '快速访问' 项
+            self.defaultTreeModel.updateChild(index) # 更新子项
+            # 展开子项
+            if self.defaultTreeModel.rowCount(index) > 0:
+                self.ui.treeView_dir.expand(index)
+
+            # ------------- 清空列表 -----------------#
+            # 资产文件
+            self.listWidget_sourcefile.clear()
+            # 导出文件
+            self.listWidget_expfile.clear()
+            # Rig文件
+            self.listWidget_rigfile.clear()
+            # 贴图文件
+            self.listWidget_expTex.clear()
+            # 缩略图列表
+            self.listWidget_img.clear()
+
+        elif os.path.isdir(path): # 判断目录是否存在
+            if self.defaultTreeModel.rowCount(index) == 0:
                 # 更新子项
                 self.defaultTreeModel.updateChild(index)
             # 展开子项
@@ -624,6 +642,24 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.treeView_dir.scrollTo(index)
 
             # fpath,fname = os.path.split(path)
+
+            # ------------- 更新详细信息 ---------------#
+            # QtWidgets.QLineEdit.setText
+            QtWidgets.QDateEdit.setDateTime
+            self.ui.lineEdit_name.setText(currentItem.data())
+            dbData = currentItem.dbData()
+            if dbData:
+                if dbData[5]:
+                    self.ui.lineEdit_label.setText(dbData[5])
+                # if dbData[6]:
+                #     self.ui.dateEdit_duedate
+                if dbData[7]:
+                    self.ui.lineEdit_reporter.setText(dbData[7])
+                if dbData[8]:
+                    self.ui.lineEdit_operator.setText(dbData[8])
+                if dbData[9]:
+                    self.ui.textEdit_describe.setText(dbData[9])
+
 
             # ------------- 更新列表 -----------------#
             # 资产文件
@@ -660,7 +696,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.bt_img.setStyleSheet("QPushButton{border-image: url(./)}") # 按钮样式
             print(index.internalPointer())
         else:
-            self.defaultTreeModel.removeRows(parentItem.row(), 1, self.defaultTreeModel.parent(index)) # 删除当前项及子项
+            self.defaultTreeModel.removeRows(currentItem.row(), 1, self.defaultTreeModel.parent(index)) # 删除当前项及子项
 
     # QtWidgets.QPushButton().setMaximumSize
     # listWidget_img item 点击事件

@@ -10,10 +10,11 @@
 import sqlite3
 import os
 import re
+import amConfigure
 
 
 # 建立自增主键:id integer primary key autoincrement
-table_list = '''list(
+table_list = '''(
     id integer primary key autoincrement,
     listName CHAR(30),
     listComplete bool,
@@ -27,7 +28,7 @@ struct_list = '''
     itemCompletes
 '''
 
-table_assets = '''assets(
+table_assets = '''(
     id integer primary key autoincrement,
     name NCHAR(50),
     local NVARCHAR(500),
@@ -36,10 +37,10 @@ table_assets = '''assets(
     label text,
     dueDate CHAR(30),
     reporter NCHAR(30),
+    operator NCHAR(100),
     describe text,
     comment text,
-    table_list int,
-    FOREIGN KEY (table_list) REFERENCES list(id)
+    table_list int
 )'''
 struct_assets = '''
     name, 
@@ -49,17 +50,26 @@ struct_assets = '''
     label,
     dueDate,
     reporter,
+    operator,
     describe,
     comment,
     table_list
 '''
 
-amdbPath = os.path.dirname(os.path.dirname(__file__)) + '/data/amdb.db'
+
+# 数据库路径
+def amdbPath():
+    projectPath = amConfigure.getProjectPath()
+    if os.path.isdir(projectPath):
+        Path = projectPath + '/amdb.db'
+        return Path
+    else:
+        return ''
 
 
 # 执行操作
 def executeDB(query):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     cursor = conn.cursor()
 
@@ -72,7 +82,7 @@ def executeDB(query):
 
 # 执行多次操作
 def executemanyDB(query, data):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     cursor = conn.cursor()
 
@@ -86,18 +96,18 @@ def executemanyDB(query, data):
 
 # 创建sqlite3数据表
 def CreateTable():
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     
-    conn.execute("create table IF NOT EXISTS " + table_list) # 执行操作
-    conn.execute("create table IF NOT EXISTS " + table_assets) # 执行操作
+    conn.execute("create table IF NOT EXISTS " + 'list' + table_list) # 执行操作
+    conn.execute("create table IF NOT EXISTS " + 'assets' + table_assets) # 执行操作
 
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
 # 重新创建数据表
 def reCreateTable(tableName):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     
     conn.execute("drop table IF EXISTS %s"%(tableName)) # 删除表
@@ -109,7 +119,7 @@ def reCreateTable(tableName):
 
 # 插入
 def insertData(tableName, tableStruct, data):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     try:
         conn.execute("insert into " + tableName + "(" + tableStruct + \
@@ -121,7 +131,7 @@ def insertData(tableName, tableStruct, data):
 
 # 插入多个
 def insertManyData(tableName, tableStruct, datas):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     try:
         conn.executemany("insert into " + tableName + "(" + tableStruct + \
@@ -133,7 +143,7 @@ def insertManyData(tableName, tableStruct, datas):
 
 # 查询数据
 def findData(tableName, theData, keys=''):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     cursor = conn.cursor()
 
     if keys == '':
@@ -148,7 +158,7 @@ def findData(tableName, theData, keys=''):
     
 # 查询数据（返回列表）
 def findDatas(tableName, theData, keys=''):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     cursor = conn.cursor()
 
     if keys == '':
@@ -163,7 +173,7 @@ def findDatas(tableName, theData, keys=''):
 
 # 遍历数据（返回列表）
 def getDatas(tableName, keys=''):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     cursor = conn.cursor()
 
     if keys == '':
@@ -178,7 +188,7 @@ def getDatas(tableName, keys=''):
 
 # 删除数据
 def deleteData(tableName, theData):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     try:
         conn.execute('DELETE FROM ' + tableName + ' WHERE ' + theData) # 执行操作
     except Exception as e:
@@ -188,7 +198,7 @@ def deleteData(tableName, theData):
 
 # 修改数据
 def updateData(tableName, theData, newData):
-    conn = sqlite3.connect(amdbPath) # 连接数据库
+    conn = sqlite3.connect(amdbPath()) # 连接数据库
     try:
         conn.execute('UPDATE ' + tableName + ' SET ' + newData + ' WHERE ' + theData) # 执行操作
     except Exception as e:
@@ -198,6 +208,7 @@ def updateData(tableName, theData, newData):
 
 
 if __name__ == '__main__':
+    print(amdbPath())
     # CreateTable()
     reCreateTable('list')
     reCreateTable('assets')
@@ -208,3 +219,4 @@ if __name__ == '__main__':
     deleteData('list', 'listName="n22"')
     print(findData('list', "listName='g11'")[0])
     print(findData('list', "listName='g11'", 'listName'))
+    print(findData('list', "listName='g11'"))
