@@ -164,7 +164,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                     elif dbValue[4] == 1:
                         return '完成'
 
-        # 设置图标
+        # 设置图标 state
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
                 # 绘制
@@ -326,7 +326,9 @@ class TreeModel(QtCore.QAbstractItemModel):
             # path = path + pathAdd # 附加内容到路径
             for data in os.listdir(path): # 获取当前路径下的文件
                 if os.path.isdir(os.path.join(path, data)): # 判断是否是目录
-                    self.insertRows(self.rowCount(parent), [data], parent) # 插入行
+                    # 排除的目录
+                    if not data in ['2D', 'Model', 'Rig', 'image']:
+                        self.insertRows(self.rowCount(parent), [data], parent) # 插入行
 
 
 class defaultTreeModel(TreeModel):
@@ -341,28 +343,28 @@ class defaultTreeModel(TreeModel):
         
         if amConfigure.getProjectBranch() == '':
             # ----------- 初始化路径 ---------------- #
-            modelPath = self._projectPath+'/3D/scenes/Model'
+            modelPath = self._projectPath+'/3D/scenes'
             if os.path.isdir(self._projectPath):
-                if not os.path.exists(self._projectPath+'/3D/scenes/Model'):
-                    os.makedirs(self._projectPath+'/3D/scenes/Model') # 创建路径
-                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Character'):
-                    os.makedirs(self._projectPath+'/3D/scenes/Model/Character') # 角色
-                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Prop'):
-                    os.makedirs(self._projectPath+'/3D/scenes/Model/Prop') # 道具
-                if not os.path.exists(self._projectPath+'/3D/scenes/Model/Scene'):
-                    os.makedirs(self._projectPath+'/3D/scenes/Model/Scene') # 场景
+                if not os.path.exists(self._projectPath+'/3D/scenes'):
+                    os.makedirs(self._projectPath+'/3D/scenes') # 创建路径
+                if not os.path.exists(self._projectPath+'/3D/scenes/Character'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Character') # 角色
+                if not os.path.exists(self._projectPath+'/3D/scenes/Prop'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Prop') # 道具
+                if not os.path.exists(self._projectPath+'/3D/scenes/Scene'):
+                    os.makedirs(self._projectPath+'/3D/scenes/Scene') # 场景
         if amConfigure.getProjectBranch() == 'branches':
             # ----------- 初始化路径 ---------------- #
-            modelPath = self._projectPath+'/3D/branches/scenes/Model'
+            modelPath = self._projectPath+'/3D/branches/scenes'
             if os.path.isdir(self._projectPath):
-                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model'):
-                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model') # 创建路径
-                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Character'):
-                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Character') # 角色
-                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Prop'):
-                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Prop') # 道具
-                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Model/Scene'):
-                    os.makedirs(self._projectPath+'/3D/branches/scenes/Model/Scene') # 场景
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes') # 创建路径
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Character'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Character') # 角色
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Prop'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Prop') # 道具
+                if not os.path.exists(self._projectPath+'/3D/branches/scenes/Scene'):
+                    os.makedirs(self._projectPath+'/3D/branches/scenes/Scene') # 场景
 
         # 设置初始项
         self._rootItem = TreeItem(modelPath)
@@ -438,8 +440,7 @@ class DropListWidget(QtWidgets.QListWidget):
         self.clear()
         if os.path.exists(self._path):
             for data in os.listdir(self._path): # 获取当前路径下的文件
-                if os.path.isfile(os.path.join(self._path, data)): # 判断是否是文件
-                    self.addItem(data)
+                self.addItem(data)
 
     # 创建右键菜单(list)
     def showListRightMenu(self, pos):
@@ -557,6 +558,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # 导出文件列表
         self.listWidget_expfile = DropListWidget(self)
         self.ui.verticalLayout_expfile.addWidget(self.listWidget_expfile)
+        self.ui.verticalLayout_expfile_rig.addWidget(self.listWidget_expfile) # rig导出文件
         # Rig文件列表
         self.listWidget_rigfile = DropListWidget(self)
         self.ui.verticalLayout_rigfile.addWidget(self.listWidget_rigfile)
@@ -574,6 +576,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateOpenProjectMenu()
         # 打开新项目
         self.ui.actionNewProject.triggered.connect(openNewProject)
+        # 清空数据库
+        self.ui.action_clearDB.triggered.connect(amDB.reCreateAll)
         
         # self.ui.pushButton.clicked.connect(self.BTTest)
 
@@ -649,38 +653,38 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.lineEdit_name.setText(currentItem.data())
             dbData = currentItem.dbData()
             if dbData:
-                if dbData[5]:
-                    self.ui.lineEdit_label.setText(dbData[5])
+                # if dbData[5]:
+                #     self.ui.lineEdit_label.setText(dbData[5])
                 # if dbData[6]:
                 #     self.ui.dateEdit_duedate
-                if dbData[7]:
-                    self.ui.lineEdit_reporter.setText(dbData[7])
                 if dbData[8]:
-                    self.ui.lineEdit_operator.setText(dbData[8])
+                    self.ui.lineEdit_reporter.setText(dbData[7])
                 if dbData[9]:
+                    self.ui.lineEdit_operator.setText(dbData[8])
+                if dbData[10]:
                     self.ui.textEdit_describe.setText(dbData[9])
 
 
             # ------------- 更新列表 -----------------#
-            # 资产文件
-            self.listWidget_sourcefile._path = path
+            # 模型资产文件
+            self.listWidget_sourcefile._path = os.path.join(path, 'Model')
             self.listWidget_sourcefile.updateList()
             # 导出文件
-            assetsPath = path.replace('scenes/Model', 'assets')
+            assetsPath = path.replace('scenes', 'assets')
             meshPath = os.path.join(assetsPath, 'Meshes')
             self.listWidget_expfile._path = meshPath
             self.listWidget_expfile.updateList()
-            # Rig文件
-            rigPath = path.replace('Model', 'Rig')
-            self.listWidget_rigfile._path = rigPath
-            self.listWidget_rigfile.updateList()
             # 贴图文件
             texPath = os.path.join(assetsPath, 'Textures')
             self.listWidget_expTex._path = texPath
             self.listWidget_expTex.updateList()
+            # Rig文件
+            rigPath = os.path.join(path, 'Rig')
+            self.listWidget_rigfile._path = rigPath
+            self.listWidget_rigfile.updateList()
 
             # 缩略图列表
-            imgPath = path.replace('scenes', 'images')
+            imgPath = os.path.join(path, 'images')
             self.listWidget_img._path = imgPath
             self.listWidget_img.updateList()
 
@@ -856,6 +860,9 @@ def SetProjectPath():
     if directory != '':
         amConfigure.setProjectPath(directory)
         w.defaultTreeModel.setupModel(amConfigure.getProjectPath()) # 更新 defaultTreeModel 
+        # 创建数据库
+        if not os.path.exists(amConfigure.getProjectPath() + '/amdb.db'):
+            amDB.reCreateAll()
     elif not os.path.isdir(amConfigure.getProjectPath()):
         showErrorMsg('工程目录不存在')
         # w.close() # 退出窗口程序
@@ -866,6 +873,9 @@ def openProject(name):
     amConfigure.setLastProjectName(name)
     if os.path.isdir(amConfigure.getProjectPath()):
         w.defaultTreeModel.setupModel(amConfigure.getProjectPath())
+        # 创建数据库
+        if not os.path.exists(amConfigure.getProjectPath() + '/amdb.db'):
+            amDB.reCreateAll()
     else:
         SetProjectPath()
 
@@ -889,6 +899,9 @@ def openNewProject():
                 amConfigure.addNewProject(value, directory)
                 w.defaultTreeModel.setupModel(amConfigure.getProjectPath())
                 w.updateOpenProjectMenu()
+                # 创建数据库
+                if not os.path.exists(amConfigure.getProjectPath() + '/amdb.db'):
+                    amDB.reCreateAll()
 
 
 def main():
@@ -903,9 +916,7 @@ def main():
     # 检查工程目录是否存在,不存在则设置工程目录
     if not os.path.isdir(amConfigure.getProjectPath()):
         SetProjectPath()
-    else:
-        amConfigure.getProjectPath()
-
+                   
     sys.exit(app.exec_()) 
 
 

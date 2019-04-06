@@ -14,9 +14,19 @@ import amConfigure
 
 
 # 建立自增主键:id integer primary key autoincrement
+table_state = '''(
+    id integer primary key autoincrement,
+    stateName NCHAR(30),
+    stateColor CHAR(30)
+)'''
+struct_state = '''
+    stateName, 
+    stateColor
+'''
+
 table_list = '''(
     id integer primary key autoincrement,
-    listName CHAR(30),
+    listName NCHAR(30),
     listComplete bool,
     itemNames text,
     itemCompletes text
@@ -35,6 +45,7 @@ table_assets = '''(
     type CHAR(30),
     state int,
     label text,
+    storyPoint int,
     dueDate CHAR(30),
     reporter NCHAR(30),
     operator NCHAR(100),
@@ -48,6 +59,7 @@ struct_assets = '''
     type, 
     state, 
     label,
+    storyPoint,
     dueDate,
     reporter,
     operator,
@@ -99,6 +111,7 @@ def CreateTable():
     conn = sqlite3.connect(amdbPath()) # 连接数据库
     conn.text_factory = str
     
+    conn.execute("create table IF NOT EXISTS " + 'state' + table_state) # 执行操作
     conn.execute("create table IF NOT EXISTS " + 'list' + table_list) # 执行操作
     conn.execute("create table IF NOT EXISTS " + 'assets' + table_assets) # 执行操作
 
@@ -206,12 +219,39 @@ def updateData(tableName, theData, newData):
     conn.commit() # 保存修改
     conn.close() # 关闭与数据库的连接
 
+# 重建所有表
+def reCreateAll():
+    # CreateTable()
+    reCreateTable('list')
+    reCreateTable('assets')
+    reCreateTable('state')
+    # 初始化状态列表
+    insertManyData('state', struct_state, (
+        ('完成', '#61bd4f'), 
+        ('', '#f2d600'), 
+        ('', '#ff9f1a'),
+        ('', '#eb5a46'), 
+        ('', '#c377e0'),
+        ('', '#f2d600'),
+        ('进行中', '#0079bf'), 
+        ('', '#355263')))
 
 if __name__ == '__main__':
     print(amdbPath())
     # CreateTable()
     reCreateTable('list')
     reCreateTable('assets')
+    reCreateTable('state')
+    # 初始化状态列表
+    insertManyData('state', struct_state, (
+        ('完成', '#61bd4f'), 
+        ('', '#f2d600'), 
+        ('', '#ff9f1a'),
+        ('', '#eb5a46'), 
+        ('', '#c377e0'),
+        ('', '#f2d600'),
+        ('进行中', '#0079bf'), 
+        ('', '#355263')))
     insertData('list', struct_list, ('nnn', False, 'aaa', 'bbb'))
     insertData('list', struct_list, ('n11', False, 'aaa', 'bbb'))
     insertData('list', struct_list, ('n22', False, 'aaa', 'bbb'))
