@@ -55,6 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # 设置 Item
         self.item = SpinBoxDelegate()
         self.ui.tableView.setItemDelegate(self.item)
+        # self.ui.tableView.setItemDelegateForColumn(1, self.item)
 
         for row in range(4):
             for column in range(2):
