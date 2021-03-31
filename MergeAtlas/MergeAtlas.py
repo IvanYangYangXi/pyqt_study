@@ -7,8 +7,8 @@ import sys
 import os
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import PIL.Image as Image
-import time
-from queue import Queue
+# import time
+# from queue import Queue
 
 
 # QtWidgets.QListWidget.setItemWidget()
@@ -139,7 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     print(self.step)
 
 
-                    time.sleep(.5)
+                    # time.sleep(.5)
                     if self.total_num == len(self.files):
                         break
                 if self.total_num == len(self.files):
